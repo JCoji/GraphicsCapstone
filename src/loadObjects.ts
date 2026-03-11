@@ -3,10 +3,20 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 
 const loader = new OBJLoader();
 
+const textureLoader = new THREE.TextureLoader();
+
 const applyBasicMaterial = (obj: THREE.Group, color: number) => {
     obj.traverse((child) => {
         if ((child as THREE.Mesh).isMesh) {
             (child as THREE.Mesh).material = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide });
+        }
+    });
+};
+
+const applyStandardMaterial = (obj: THREE.Group, color: number, map: THREE.Texture | null = null) => {
+    obj.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+            (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({ color, map, side: THREE.DoubleSide });
         }
     });
 };
@@ -42,5 +52,20 @@ export const loadObjects = (scene: THREE.Scene) => {
         },
         undefined,
         (err) => console.error('Failed to load ice:', err)
+    );
+
+    loader.load(
+        '/sled_toboggan_improved.obj',
+        (obj) => {
+            const texture  =  textureLoader.load('/wood_texture.jpg')
+            //0x633200
+            applyStandardMaterial(obj,  0xffffff, texture);
+            scene.add(obj);
+            console.log('Sled Loaded', obj);
+            obj.position.set(10, 5, 10);
+            
+        },
+        undefined,
+        (err) => console.error('Failed to load sled:', err)
     );
 };
