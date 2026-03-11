@@ -48,7 +48,7 @@ window.addEventListener('load', () => {
     loader.load(
         '/sled_slope_structure.obj',
         (obj) => {
-            applyBasicMaterial(obj, 0x8888ff);
+            applyBasicMaterial(obj, 0xffffff);
             scene.add(obj);
             console.log('structure loaded', obj);
         },
@@ -66,4 +66,6 @@ window.addEventListener('load', () => {
         undefined,
         (err) => console.error('Failed to load ice:', err)
     );
+
+    renderer.render(scene, camera);
 });
