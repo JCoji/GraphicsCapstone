@@ -1,10 +1,39 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { init, handleResize, createAndRenderScene } from './utils';
+import { loadObjects } from './loadObjects';
 
 window.addEventListener('load', () => {
     const { camera, renderer } = init();
     window.addEventListener('resize', () => handleResize(camera, renderer));
     const scene = createAndRenderScene(renderer, camera);
     scene.background = new THREE.Color(0x333333);
-    renderer.render(scene, camera);
+
+    // Position camera to view full slope (X:0-21, Y:0-8, Z:-5.5 to 28)
+    camera.position.set(35, 20, -10);
+    camera.lookAt(10, 3, 10);
+    camera.near = 0.1;
+    camera.far = 1000;
+    camera.fov = 60;
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    dirLight.position.set(10, 20, -10);
+    scene.add(dirLight);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(10, 3, 10);
+    controls.update();
+
+    const animate = () => {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    };
+    animate();
+
+    loadObjects(scene);
 });
