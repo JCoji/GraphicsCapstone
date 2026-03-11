@@ -11,7 +11,22 @@
             margin: 0;
             overflow: hidden;
         }
+        #debug-label {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-family: monospace;
+            font-size: 14px;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 12px;
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
     </style>
+    <div id="debug-label">Sled Slope — Debug View (Orbit: drag | Zoom: scroll | Pan: right-drag)</div>
     <script type="module" src="./script.ts"></script>
 </body>
 </html>

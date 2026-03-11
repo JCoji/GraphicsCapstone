@@ -40,7 +40,7 @@ window.addEventListener('load', () => {
     const applyBasicMaterial = (obj: THREE.Group, color: number) => {
         obj.traverse((child) => {
             if ((child as THREE.Mesh).isMesh) {
-                (child as THREE.Mesh).material = new THREE.MeshBasicMaterial({ color });
+                (child as THREE.Mesh).material = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide });
             }
         });
     };
@@ -66,5 +66,4 @@ window.addEventListener('load', () => {
         undefined,
         (err) => console.error('Failed to load ice:', err)
     );
-
 });
