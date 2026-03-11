@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { init, handleResize, createAndRenderScene } from './utils';
+import { loadObjects } from './loadObjects';
 
 window.addEventListener('load', () => {
     const { camera, renderer } = init();
@@ -35,37 +35,5 @@ window.addEventListener('load', () => {
     };
     animate();
 
-    const loader = new OBJLoader();
-
-    const applyBasicMaterial = (obj: THREE.Group, color: number) => {
-        obj.traverse((child) => {
-            if ((child as THREE.Mesh).isMesh) {
-                (child as THREE.Mesh).material = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide });
-            }
-        });
-    };
-
-    loader.load(
-        '/sled_slope_structure.obj',
-        (obj) => {
-            applyBasicMaterial(obj, 0xffffff);
-            scene.add(obj);
-            console.log('structure loaded', obj);
-        },
-        undefined,
-        (err) => console.error('Failed to load structure:', err)
-    );
-
-    loader.load(
-        '/sled_slope_ice.obj',
-        (obj) => {
-            applyBasicMaterial(obj, 0xaaddff);
-            scene.add(obj);
-            console.log('ice loaded', obj);
-        },
-        undefined,
-        (err) => console.error('Failed to load ice:', err)
-    );
-
-    renderer.render(scene, camera);
+    loadObjects(scene);
 });
