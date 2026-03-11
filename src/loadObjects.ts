@@ -17,16 +17,19 @@ const applyStandardMaterial = (obj: THREE.Group, color: number, map: THREE.Textu
     obj.traverse((child) => {
         if ((child as THREE.Mesh).isMesh) {
             (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({ color, map, side: THREE.DoubleSide });
+            (child as THREE.Mesh).castShadow = true;
+            (child as THREE.Mesh).receiveShadow = true;
         }
     });
 };
 
 const addGround = (scene: THREE.Scene) => {
     const geometry = new THREE.CircleGeometry(30, 64);
-    const material = new THREE.MeshBasicMaterial({ color: 0x4caf50, side: THREE.DoubleSide });
+    const material = new THREE.MeshStandardMaterial({ color: 0x4caf50, side: THREE.DoubleSide });
     const ground = new THREE.Mesh(geometry, material);
     ground.rotation.x = -Math.PI / 2;
     ground.position.set(10, -1, 11);
+    ground.receiveShadow = true;
     scene.add(ground);
 };
 
@@ -36,6 +39,7 @@ export const loadObjects = (scene: THREE.Scene) => {
         '/sled_slope_structure.obj',
         (obj) => {
             applyBasicMaterial(obj, 0xffffff);
+            // applyStandardMaterial(obj, 0xffffff);
             scene.add(obj);
             console.log('structure loaded', obj);
         },
@@ -47,6 +51,7 @@ export const loadObjects = (scene: THREE.Scene) => {
         '/sled_slope_ice.obj',
         (obj) => {
             applyBasicMaterial(obj, 0xaaddff);
+            // applyStandardMaterial(obj, 0xaaddff);
             scene.add(obj);
             console.log('ice loaded', obj);
         },
@@ -58,14 +63,27 @@ export const loadObjects = (scene: THREE.Scene) => {
         '/sled_toboggan_improved.obj',
         (obj) => {
             const texture  =  textureLoader.load('/wood_texture.jpg')
-            //0x633200
             applyStandardMaterial(obj,  0xffffff, texture);
-            scene.add(obj);
-            console.log('Sled Loaded', obj);
-            obj.position.set(10, 5, 10);
-            
+
+            const positions = [
+                {x: 2, y:8, z:-2},
+                {x: 6, y:8, z:-2},
+                {x: 10, y:8, z:-2},
+                {x: 14, y:8, z:-2},
+                {x: 18, y:8, z:-2},
+            ];
+
+            positions.forEach((pos, i)=> {
+                const sled = obj.clone();
+                sled.name = `sled_${i}`;
+                sled.position.set(pos.x, pos.y, pos.z);
+                sled.scale.z = -1;
+                scene.add(sled)
+                console.log(`${sled.name} loaded`)
+            });
+
         },
         undefined,
-        (err) => console.error('Failed to load sled:', err)
+        (err) => console.error('Failed to load sled(s):', err)
     );
 };
