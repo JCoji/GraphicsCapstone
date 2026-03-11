@@ -10,8 +10,8 @@ window.addEventListener('load', () => {
     scene.background = new THREE.Color(0x333333);
 
     // Position camera to view full slope (X:0-21, Y:0-8, Z:-5.5 to 28)
-    camera.position.set(35, 20, -10);
-    camera.lookAt(10, 3, 10);
+    camera.position.set(-4, 16, 8);
+    camera.lookAt(10, 8, -2);
     camera.near = 0.1;
     camera.far = 1000;
     camera.fov = 60;
@@ -20,12 +20,26 @@ window.addEventListener('load', () => {
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
-    dirLight.position.set(10, 20, -10);
+    const dirLight = new THREE.DirectionalLight(0xfff4e0, 1.5);
+    dirLight.position.set(30, 20, 40);
     scene.add(dirLight);
 
+    // Shadow lighting
+    const d = 50
+
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.left = -d;
+    dirLight.shadow.camera.right = d;
+    dirLight.shadow.camera.top = d;
+    dirLight.shadow.camera.bottom = -d;
+    dirLight.shadow.camera.far = 200;
+    dirLight.shadow.mapSize.set(2048, 2048);
+    dirLight.shadow.bias = -0.001
+
+    renderer.shadowMap.enabled = true;    
+
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(10, 3, 10);
+    controls.target.set(10, 8, -2);
     controls.update();
 
     const animate = () => {
