@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { init, handleResize, createAndRenderScene } from './utils';
 
 window.addEventListener('load', () => {
@@ -23,6 +24,17 @@ window.addEventListener('load', () => {
     dirLight.position.set(10, 20, -10);
     scene.add(dirLight);
 
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(10, 3, 10);
+    controls.update();
+
+    const animate = () => {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    };
+    animate();
+
     const loader = new OBJLoader();
 
     const applyBasicMaterial = (obj: THREE.Group, color: number) => {
@@ -38,7 +50,6 @@ window.addEventListener('load', () => {
         (obj) => {
             applyBasicMaterial(obj, 0x8888ff);
             scene.add(obj);
-            renderer.render(scene, camera);
             console.log('structure loaded', obj);
         },
         undefined,
@@ -50,12 +61,10 @@ window.addEventListener('load', () => {
         (obj) => {
             applyBasicMaterial(obj, 0xaaddff);
             scene.add(obj);
-            renderer.render(scene, camera);
             console.log('ice loaded', obj);
         },
         undefined,
         (err) => console.error('Failed to load ice:', err)
     );
 
-    renderer.render(scene, camera);
 });
