@@ -36,7 +36,7 @@ window.addEventListener('load', () => {
     dirLight.shadow.mapSize.set(2048, 2048);
     dirLight.shadow.bias = -0.001
 
-    renderer.shadowMap.enabled = true;    
+    renderer.shadowMap.enabled = true;
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(10, 8, -2);

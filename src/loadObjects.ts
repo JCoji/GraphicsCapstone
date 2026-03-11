@@ -62,7 +62,7 @@ export const loadObjects = (scene: THREE.Scene) => {
     loader.load(
         '/sled_toboggan_improved.obj',
         (obj) => {
-            const texture  =  textureLoader.load('/wood_texture.jpg')
+            const texture  =  textureLoader.load('/wood1.jpg')
             applyStandardMaterial(obj,  0xffffff, texture);
 
             const positions = [
