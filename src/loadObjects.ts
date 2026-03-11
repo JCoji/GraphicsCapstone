@@ -11,7 +11,17 @@ const applyBasicMaterial = (obj: THREE.Group, color: number) => {
     });
 };
 
+const addGround = (scene: THREE.Scene) => {
+    const geometry = new THREE.CircleGeometry(30, 64);
+    const material = new THREE.MeshBasicMaterial({ color: 0x4caf50, side: THREE.DoubleSide });
+    const ground = new THREE.Mesh(geometry, material);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.set(10, -1, 11);
+    scene.add(ground);
+};
+
 export const loadObjects = (scene: THREE.Scene) => {
+    addGround(scene);
     loader.load(
         '/sled_slope_structure.obj',
         (obj) => {
