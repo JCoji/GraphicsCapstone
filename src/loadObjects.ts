@@ -16,7 +16,7 @@ const applyBasicMaterial = (obj: THREE.Group, color: number) => {
 const applyStandardMaterial = (obj: THREE.Group, color: number, map: THREE.Texture | null = null) => {
     obj.traverse((child) => {
         if ((child as THREE.Mesh).isMesh) {
-            (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({ color, map, side: THREE.DoubleSide });
+            (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({ color, map, side: THREE.DoubleSide, roughness: 1.0, metalness: 0.0 });
             (child as THREE.Mesh).castShadow = true;
             (child as THREE.Mesh).receiveShadow = true;
         }
@@ -38,8 +38,7 @@ export const loadObjects = (scene: THREE.Scene) => {
     loader.load(
         '/sled_slope_structure.obj',
         (obj) => {
-            applyBasicMaterial(obj, 0xffffff);
-            // applyStandardMaterial(obj, 0xffffff);
+            applyStandardMaterial(obj, 0xe8f0ff);
             scene.add(obj);
             console.log('structure loaded', obj);
         },
@@ -50,7 +49,7 @@ export const loadObjects = (scene: THREE.Scene) => {
     loader.load(
         '/sled_slope_ice.obj',
         (obj) => {
-            applyBasicMaterial(obj, 0xaaddff);
+            applyStandardMaterial(obj, 0xaaddff);
             // applyStandardMaterial(obj, 0xaaddff);
             scene.add(obj);
             console.log('ice loaded', obj);
