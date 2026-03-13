@@ -40,13 +40,14 @@ export const loadObjects = (scene: THREE.Scene) => {
     loader.load(
         '/sled_slope_structure.obj',
         (obj) => {
-            applyStandardMaterial(obj, 0xe8f0ff);
+            applyStandardMaterial(obj, 0xaaddff);
             scene.add(obj);
         },
         undefined,
         (err) => console.error('Failed to load structure base:', err)
     );
 
+    
     loader.load(
         '/sled_slope_structure.obj',
         (obj) => {
@@ -56,7 +57,7 @@ export const loadObjects = (scene: THREE.Scene) => {
             const snowRoughness = textureLoader.load('/snow_textures/Snow_roughness.png');
             for (const tex of [snowAlbedo, snowNormal, snowDisp, snowRoughness]) {
                 tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-                tex.repeat.set(1, 1);
+                tex.repeat.set(0.5, 0.5);
             }
             obj.traverse((child) => {
                 if ((child as THREE.Mesh).isMesh) {
@@ -65,12 +66,12 @@ export const loadObjects = (scene: THREE.Scene) => {
                         map: snowAlbedo,
                         normalMap: snowNormal,
                         bumpMap: snowDisp,
-                        bumpScale: 0.3,
+                        bumpScale: 1,
                         roughnessMap: snowRoughness,
                         transparent: true,
                         opacity: 0.9,
                         side: THREE.DoubleSide,
-                        metalness: 0.0,
+                        metalness: 0.1,
                         polygonOffset: true,
                         polygonOffsetFactor: -1,
                         polygonOffsetUnits: -1,
@@ -104,6 +105,7 @@ export const loadObjects = (scene: THREE.Scene) => {
                     (child as THREE.Mesh).receiveShadow = true;
                 }
             });
+            obj.position.y += 0.38;
             scene.add(obj);
             console.log('ice loaded', obj);
         },
