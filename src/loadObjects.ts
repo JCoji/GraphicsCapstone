@@ -38,7 +38,26 @@ export const loadObjects = (scene: THREE.Scene) => {
     loader.load(
         '/sled_slope_structure.obj',
         (obj) => {
-            applyStandardMaterial(obj, 0xe8f0ff);
+            const snowAlbedo = textureLoader.load('/snow_textures/Snow1Albedo.png');
+            const snowNormal = textureLoader.load('/snow_textures/Snow1Normal.png');
+            for (const tex of [snowAlbedo, snowNormal]) {
+                tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                tex.repeat.set(4, 4);
+            }
+            obj.traverse((child) => {
+                if ((child as THREE.Mesh).isMesh) {
+                    (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({
+                        color: 0xffffff,
+                        map: snowAlbedo,
+                        normalMap: snowNormal,
+                        side: THREE.DoubleSide,
+                        roughness: 0.9,
+                        metalness: 0.0,
+                    });
+                    (child as THREE.Mesh).castShadow = true;
+                    (child as THREE.Mesh).receiveShadow = true;
+                }
+            });
             scene.add(obj);
             console.log('structure loaded', obj);
         },
