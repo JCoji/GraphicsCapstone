@@ -18,9 +18,9 @@ window.addEventListener('load', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 2);
     scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xfff4e0, 1.5);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2.5)
     dirLight.position.set(30, 20, 40);
     scene.add(dirLight);
 
