@@ -2,8 +2,10 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { init, handleResize, createAndRenderScene } from './utils';
 import { loadObjects } from './loadObjects';
+import { initPhysics, addStaticBody, addDynamicBody, updatePhysics, createBoxShape } from './physics';
 
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
+    await initPhysics();
     const { camera, renderer } = init();
     window.addEventListener('resize', () => handleResize(camera, renderer));
     const scene = createAndRenderScene(renderer, camera);
@@ -42,8 +44,13 @@ window.addEventListener('load', () => {
     controls.target.set(10, 8, -2);
     controls.update();
 
+    let lastTime = 0;
     const animate = () => {
         requestAnimationFrame(animate);
+        const currentTime = performance.now() / 1000;
+        const deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+        updatePhysics(deltaTime);
         controls.update();
         renderer.render(scene, camera);
     };

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { addStaticBody, addDynamicBody, createBoxShape, createMeshShape } from './physics';
 
 const loader = new OBJLoader();
 
@@ -50,6 +51,25 @@ const addGround = (scene: THREE.Scene) => {
     ground.receiveShadow = true;
     scene.add(ground);
 };
+
+const showPhysicsMesh = (mesh: THREE.Mesh, scene: THREE.Scene) => {
+
+    const debugGeo = mesh.geometry.clone();
+
+    const debugMat = new THREE.MeshBasicMaterial({
+        color: 0xff0000,
+        wireframe: true
+    });
+
+    const debugMesh = new THREE.Mesh(debugGeo, debugMat);
+
+    debugMesh.position.copy(mesh.position);
+    debugMesh.quaternion.copy(mesh.quaternion);
+    debugMesh.scale.copy(mesh.scale);
+
+    scene.add(debugMesh);
+};
+
 
 export const loadObjects = (scene: THREE.Scene) => {
     addGround(scene);
@@ -113,12 +133,15 @@ export const loadObjects = (scene: THREE.Scene) => {
             const iceNormal    = textureLoader.load('/ice_textures/Snow_normal.png');
             const iceDisp      = textureLoader.load('/ice_textures/Snow_height.png');
             const iceRoughness = textureLoader.load('/ice_textures/Snow_roughness.png');
+
             for (const tex of [iceAlbedo, iceNormal, iceDisp, iceRoughness]) {
                 tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
                 tex.repeat.set(1, 1);
             }
+
             obj.traverse((child) => {
                 if ((child as THREE.Mesh).isMesh) {
+
                     (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({
                         color: 0xd1f1ff,
                         map: iceAlbedo,
@@ -133,12 +156,34 @@ export const loadObjects = (scene: THREE.Scene) => {
                         polygonOffsetFactor: -2,
                         polygonOffsetUnits: -2,
                     });
+
                     (child as THREE.Mesh).castShadow = true;
                     (child as THREE.Mesh).receiveShadow = true;
                 }
             });
+
             obj.position.y += 0.38;
             scene.add(obj);
+
+            // physics
+            obj.updateMatrixWorld(true);
+
+            obj.traverse((child) => {
+                if ((child as THREE.Mesh).isMesh) {
+
+                    const mesh = child as THREE.Mesh;
+
+                    // DEBUG VISUALIZATION
+                    showPhysicsMesh(mesh, scene);
+
+                    const slopeShape = createMeshShape(mesh);
+
+                    addStaticBody(mesh, slopeShape);
+
+                    console.log("slope physics added");
+                }
+            });
+
             console.log('ice loaded', obj);
         },
         undefined,
@@ -152,11 +197,11 @@ export const loadObjects = (scene: THREE.Scene) => {
             applyStandardMaterial(obj,  0xffffff, texture);
 
             const positions = [
-                {x: 2, y:8, z:-2},
-                {x: 6, y:8, z:-2},
-                {x: 10, y:8, z:-2},
-                {x: 14, y:8, z:-2},
-                {x: 18, y:8, z:-2},
+                {x: 2, y:8, z:5},
+                {x: 6, y:8, z:2},
+                {x: 10, y:8, z:10},
+                {x: 14, y:8, z:2},
+                {x: 18, y:8, z:0},
             ];
 
             positions.forEach((pos, i)=> {
@@ -164,8 +209,11 @@ export const loadObjects = (scene: THREE.Scene) => {
                 sled.name = `sled_${i}`;
                 sled.position.set(pos.x, pos.y, pos.z);
                 sled.scale.z = -1;
-                scene.add(sled)
-                console.log(`${sled.name} loaded`)
+                scene.add(sled);
+                // Add physics for sled
+                const sledShape = createBoxShape(2, 1, 4);
+                addDynamicBody(sled, sledShape, 10);
+                console.log(`${sled.name} loaded`);
             });
 
         },
