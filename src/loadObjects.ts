@@ -24,14 +24,14 @@ const applyStandardMaterial = (obj: THREE.Group, color: number, map: THREE.Textu
 };
 
 const addGround = (scene: THREE.Scene) => {
-    const geometry = new THREE.CircleGeometry(30, 64);
+    const geometry = new THREE.CircleGeometry(100, 64);
     const groundAlbedo    = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Color.png');
     const groundNormal    = textureLoader.load('/Snow-10/Snow010A_2K-PNG_NormalGL.png');
     const groundDisp      = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Displacement.png');
     const groundRoughness = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Roughness.png');
     for (const tex of [groundAlbedo, groundNormal, groundDisp, groundRoughness]) {
         tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-        tex.repeat.set(4, 4);
+        tex.repeat.set(8, 8);
     }
     const material = new THREE.MeshStandardMaterial({
         color: 0xe8f4ff,
