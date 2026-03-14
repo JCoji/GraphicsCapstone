@@ -25,10 +25,28 @@ const applyStandardMaterial = (obj: THREE.Group, color: number, map: THREE.Textu
 
 const addGround = (scene: THREE.Scene) => {
     const geometry = new THREE.CircleGeometry(30, 64);
-    const material = new THREE.MeshStandardMaterial({ color: 0x4caf50, side: THREE.DoubleSide });
+    const groundAlbedo    = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Color.png');
+    const groundNormal    = textureLoader.load('/Snow-10/Snow010A_2K-PNG_NormalGL.png');
+    const groundDisp      = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Displacement.png');
+    const groundRoughness = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Roughness.png');
+    for (const tex of [groundAlbedo, groundNormal, groundDisp, groundRoughness]) {
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(4, 4);
+    }
+    const material = new THREE.MeshStandardMaterial({
+        color: 0xe8f4ff,
+        map: groundAlbedo,
+        normalMap: groundNormal,
+        bumpMap: groundDisp,
+        bumpScale: 1,
+        roughnessMap: groundRoughness,
+        roughness: 0.15,
+        metalness: 0.1,
+        side: THREE.DoubleSide,
+    });
     const ground = new THREE.Mesh(geometry, material);
     ground.rotation.x = -Math.PI / 2;
-    ground.position.set(10, -2, 11);
+    ground.position.set(10, 0, 11);
     ground.receiveShadow = true;
     scene.add(ground);
 };
@@ -38,7 +56,7 @@ export const loadObjects = (scene: THREE.Scene) => {
 
     // Blue base layer — renders behind the snow overlay
     loader.load(
-        '/sled_slope_structure.obj',
+        '/sled_slope_structure_fixed_uv_v3.obj',
         (obj) => {
             applyStandardMaterial(obj, 0xaaddff);
             scene.add(obj);
@@ -49,12 +67,12 @@ export const loadObjects = (scene: THREE.Scene) => {
 
     
     loader.load(
-        '/sled_slope_structure.obj',
+        '/sled_slope_structure_fixed_uv_v3.obj',
         (obj) => {
-            const snowAlbedo    = textureLoader.load('/snow_textures/Snow_basecolor.png');
-            const snowNormal    = textureLoader.load('/snow_textures/Snow_normal.png');
-            const snowDisp      = textureLoader.load('/snow_textures/Snow_height.png');
-            const snowRoughness = textureLoader.load('/snow_textures/Snow_roughness.png');
+            const snowAlbedo    = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Color.png');
+            const snowNormal    = textureLoader.load('/Snow-10/Snow010A_2K-PNG_NormalGL.png');
+            const snowDisp      = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Displacement.png');
+            const snowRoughness = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Roughness.png');
             for (const tex of [snowAlbedo, snowNormal, snowDisp, snowRoughness]) {
                 tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
                 tex.repeat.set(0.5, 0.5);
@@ -62,12 +80,13 @@ export const loadObjects = (scene: THREE.Scene) => {
             obj.traverse((child) => {
                 if ((child as THREE.Mesh).isMesh) {
                     (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({
-                        color: 0xddeeff,
+                        color: 0xe8f4ff,
                         map: snowAlbedo,
                         normalMap: snowNormal,
                         bumpMap: snowDisp,
                         bumpScale: 1,
                         roughnessMap: snowRoughness,
+                        roughness: 0.15,
                         transparent: true,
                         opacity: 0.9,
                         side: THREE.DoubleSide,
@@ -90,13 +109,26 @@ export const loadObjects = (scene: THREE.Scene) => {
     loader.load(
         '/sled_slope_ice.obj',
         (obj) => {
+            const iceAlbedo    = textureLoader.load('/ice_textures/Snow_basecolor.png');
+            const iceNormal    = textureLoader.load('/ice_textures/Snow_normal.png');
+            const iceDisp      = textureLoader.load('/ice_textures/Snow_height.png');
+            const iceRoughness = textureLoader.load('/ice_textures/Snow_roughness.png');
+            for (const tex of [iceAlbedo, iceNormal, iceDisp, iceRoughness]) {
+                tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                tex.repeat.set(1, 1);
+            }
             obj.traverse((child) => {
                 if ((child as THREE.Mesh).isMesh) {
                     (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({
-                        color: 0xaaddff,
+                        color: 0xd1f1ff,
+                        map: iceAlbedo,
+                        normalMap: iceNormal,
+                        bumpMap: iceDisp,
+                        bumpScale: 1,
+                        roughnessMap: iceRoughness,
+                        roughness: 0.15,
                         side: THREE.DoubleSide,
-                        roughness: 1.0,
-                        metalness: 0.0,
+                        metalness: 0.1,
                         polygonOffset: true,
                         polygonOffsetFactor: -2,
                         polygonOffsetUnits: -2,
