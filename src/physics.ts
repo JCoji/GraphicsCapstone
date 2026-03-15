@@ -43,6 +43,7 @@ export const addStaticBody = (threeObject: THREE.Object3D, shape: any) => {
 
     physicsWorld.addRigidBody(body);
     rigidBodies.push({ threeObject, body });
+    return body;
 };
 
 export const addDynamicBody = (threeObject: THREE.Object3D, shape: any, mass: number = 1) => {
@@ -66,6 +67,7 @@ export const addDynamicBody = (threeObject: THREE.Object3D, shape: any, mass: nu
 
     physicsWorld.addRigidBody(body);
     rigidBodies.push({ threeObject, body });
+    return body;
 };
 
 export const updatePhysics = (deltaTime: number) => {

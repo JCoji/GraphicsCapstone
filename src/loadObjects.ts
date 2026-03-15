@@ -178,7 +178,8 @@ export const loadObjects = (scene: THREE.Scene) => {
 
                     const slopeShape = createMeshShape(mesh);
 
-                    addStaticBody(mesh, slopeShape);
+                    const body = addStaticBody(mesh, slopeShape);
+                    body.setFriction(0.02);
 
                     console.log("slope physics added");
                 }
@@ -197,7 +198,7 @@ export const loadObjects = (scene: THREE.Scene) => {
             applyStandardMaterial(obj,  0xffffff, texture);
 
             const positions = [
-                {x: 2, y:8, z:5},
+                {x: 2, y:8, z:-2.5},
                 {x: 6, y:8, z:2},
                 {x: 10, y:8, z:10},
                 {x: 14, y:8, z:2},
@@ -211,8 +212,10 @@ export const loadObjects = (scene: THREE.Scene) => {
                 sled.scale.z = -1;
                 scene.add(sled);
                 // Add physics for sled
-                const sledShape = createBoxShape(2, 1, 4);
-                addDynamicBody(sled, sledShape, 10);
+                const sledShape = createBoxShape(2, 0.5, 4);
+                const body = addDynamicBody(sled, sledShape, 10);
+                body.setFriction(0.05);
+                
                 console.log(`${sled.name} loaded`);
             });
 
