@@ -106,6 +106,12 @@ window.addEventListener('load', async () => {
 
     let lastTime = 0;
     const animate = () => {
+        requestAnimationFrame(animate);
+        const currentTime = performance.now() / 1000;
+        const deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+        updatePhysics(deltaTime);
+
         // lazy-load first person controller after objects are loaded and physics bodies are created
         if (!firstPersonController) {
             firstPersonController = initFirstPersonView(scene, camera, gui, modeState, controls, renderer);
@@ -114,12 +120,6 @@ window.addEventListener('load', async () => {
             firstPersonController.update();
         }
 
-
-        requestAnimationFrame(animate);
-        const currentTime = performance.now() / 1000;
-        const deltaTime = currentTime - lastTime;
-        lastTime = currentTime;
-        updatePhysics(deltaTime);
         if (controls.enabled) {
             controls.update();
         }

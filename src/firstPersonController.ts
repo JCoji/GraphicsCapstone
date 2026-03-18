@@ -7,16 +7,19 @@ export class FirstPersonController {
     private sledObject: THREE.Object3D;
     private sledBody: any;
     private yaw = 0;
+    private yawCenter = 0;
     private pitch = 0;
     private enabled = false;
     private readonly cameraOffset: THREE.Vector3;
     private readonly mouseSensitivity: number;
-    private readonly pitchLimit = THREE.MathUtils.degToRad(89);
+    private readonly yawLimit = THREE.MathUtils.degToRad(90);
+    private readonly pitchLimit = THREE.MathUtils.degToRad(45);
     private readonly lookEuler = new THREE.Euler(0, 0, 0, 'YXZ');
     private readonly lookQuaternion = new THREE.Quaternion();
     private readonly worldPosition = new THREE.Vector3();
     private readonly worldQuaternion = new THREE.Quaternion();
     private readonly worldOffset = new THREE.Vector3();
+    private readonly forwardXZ = new THREE.Vector3();
     private readonly bodyTransform: any = null;
 
     constructor(
@@ -60,7 +63,7 @@ export class FirstPersonController {
             return;
         }
 
-        this.yaw -= deltaX * this.mouseSensitivity;
+        this.setYaw(this.yaw - deltaX * this.mouseSensitivity);
         this.setPitch(this.pitch - deltaY * this.mouseSensitivity);
     }
 
@@ -69,7 +72,7 @@ export class FirstPersonController {
     }
 
     setYaw(yaw: number): void {
-        this.yaw = yaw;
+        this.yaw = this.clampYaw(yaw);
     }
 
     getYaw(): number {
@@ -81,12 +84,27 @@ export class FirstPersonController {
     }
 
     enable(): void {
+        this.updateSledPose();
+        this.forwardXZ.set(0, 0, -1).applyQuaternion(this.worldQuaternion);
+        this.forwardXZ.y = 0;
+
+        if (this.forwardXZ.lengthSq() > 1e-8) {
+            this.forwardXZ.normalize();
+            this.yaw = Math.atan2(-this.forwardXZ.x, -this.forwardXZ.z);
+        }
+
+        this.yawCenter = this.yaw;
+        this.setYaw(this.yaw);
         this.enabled = true;
         this.update();
     }
 
     disable(): void {
         this.enabled = false;
+    }
+
+    private clampYaw(yaw: number): number {
+        return THREE.MathUtils.clamp(yaw, this.yawCenter - this.yawLimit, this.yawCenter + this.yawLimit);
     }
 
     private updateSledPose(): void {
