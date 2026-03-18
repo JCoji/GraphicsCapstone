@@ -50,6 +50,15 @@ const addGround = (scene: THREE.Scene) => {
     ground.position.set(10, 0, 11);
     ground.receiveShadow = true;
     scene.add(ground);
+
+    const groundCollider = new THREE.Object3D();
+    groundCollider.position.copy(ground.position);
+
+    scene.add(groundCollider);
+
+    const shape = createBoxShape(200, 1, 200);
+    const body = addStaticBody(groundCollider, shape);
+    body.setFriction(0.9);
 };
 
 const showPhysicsMesh = (mesh: THREE.Mesh, scene: THREE.Scene) => {
@@ -80,6 +89,21 @@ export const loadObjects = (scene: THREE.Scene) => {
         (obj) => {
             applyStandardMaterial(obj, 0xaaddff);
             scene.add(obj);
+
+            obj.updateMatrixWorld(true);
+
+            obj.traverse((child) => {
+                if ((child as THREE.Mesh).isMesh) {
+                    const mesh = child as THREE.Mesh;
+
+                    const shape = createMeshShape(mesh);
+                    const body = addStaticBody(mesh, shape);
+
+                    body.setFriction(0.8);
+                }
+            });
+
+            console.log('structure physics added');
         },
         undefined,
         (err) => console.error('Failed to load structure base:', err)
@@ -162,10 +186,9 @@ export const loadObjects = (scene: THREE.Scene) => {
                 }
             });
 
-            obj.position.y += 0.38;
+            // obj.position.y += 0.38;
             scene.add(obj);
 
-            // physics
             obj.updateMatrixWorld(true);
 
             obj.traverse((child) => {
@@ -173,7 +196,7 @@ export const loadObjects = (scene: THREE.Scene) => {
 
                     const mesh = child as THREE.Mesh;
 
-                    // DEBUG VISUALIZATION
+                    // debug
                     showPhysicsMesh(mesh, scene);
 
                     const slopeShape = createMeshShape(mesh);
@@ -203,6 +226,7 @@ export const loadObjects = (scene: THREE.Scene) => {
                 {x: 10, y:8, z:10},
                 {x: 14, y:8, z:2},
                 {x: 18, y:8, z:0},
+                // {x: 16, y:8, z:0},
             ];
 
             positions.forEach((pos, i)=> {
@@ -211,7 +235,7 @@ export const loadObjects = (scene: THREE.Scene) => {
                 sled.position.set(pos.x, pos.y, pos.z);
                 sled.scale.z = -1;
                 scene.add(sled);
-                // Add physics for sled
+
                 const sledShape = createBoxShape(2, 0.5, 4);
                 const body = addDynamicBody(sled, sledShape, 10);
                 body.setFriction(0.05);
