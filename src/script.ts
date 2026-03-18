@@ -1,8 +1,62 @@
 import * as THREE from 'three';
+import { GUI } from 'dat.gui';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { init, handleResize, createAndRenderScene } from './utils';
 import { loadObjects } from './loadObjects';
-import { initPhysics, addStaticBody, addDynamicBody, updatePhysics, createBoxShape } from './physics';
+import { initPhysics, updatePhysics, getRigidBodyFromName } from './physics';
+import { FirstPersonController } from './firstPersonController';
+
+const initFirstPersonView = (scene: THREE.Scene, camera: THREE.Camera, gui: GUI, modeState: any, controls: OrbitControls, renderer: THREE.WebGLRenderer) => {
+    const sled = getRigidBodyFromName('sled_2');
+    if (!sled) return null;
+
+    const firstPersonController = new FirstPersonController(
+        camera,
+        sled.threeObject,
+        sled.body,
+        new THREE.Vector3(0, 0.5, 0.3),
+        0.003
+    );
+    console.log('FirstPersonController initialized');
+
+    const firstPersonToggleController = gui.add(modeState, 'firstPerson').name('First Person (P)').onChange((enabled: boolean) => {
+        if (enabled) {
+            // enable first person mode and disable orbit controls
+            firstPersonController?.enable();
+            controls.enabled = false;
+            // lock pointer for mouse movement
+            renderer.domElement.requestPointerLock();
+        } else {
+            // disable first person mode and enable orbit controls
+            firstPersonController?.disable();
+            controls.enabled = true;
+            controls.update();
+            if (document.pointerLockElement) {
+                document.exitPointerLock();
+            }
+        }
+    });
+
+    window.addEventListener('keydown', (event) => {
+        if (event.key.toLowerCase() === 'p') {
+            firstPersonToggleController.setValue(!modeState.firstPerson);
+            firstPersonToggleController.updateDisplay();
+        }
+    });
+
+    window.addEventListener('mousemove', (event) => {
+        if (!modeState.firstPerson) {
+            return;
+        }
+
+        if (document.pointerLockElement !== renderer.domElement) {
+            return;
+        }
+
+        firstPersonController.onMouseMove(event.movementX, event.movementY);
+    });
+    return firstPersonController;
+}
 
 window.addEventListener('load', async () => {
     await initPhysics();
@@ -44,14 +98,31 @@ window.addEventListener('load', async () => {
     controls.target.set(10, 8, -2);
     controls.update();
 
+    // gui to control first person mode
+    const modeState = { firstPerson: false };
+    const gui = new GUI({ name: 'Camera' });
+    // lazy-load first person controller after objects are loaded and physics bodies are created
+    let firstPersonController: FirstPersonController | null = null;
+
     let lastTime = 0;
     const animate = () => {
+        // lazy-load first person controller after objects are loaded and physics bodies are created
+        if (!firstPersonController) {
+            firstPersonController = initFirstPersonView(scene, camera, gui, modeState, controls, renderer);
+        }
+        if (firstPersonController && modeState.firstPerson) {
+            firstPersonController.update();
+        }
+
+
         requestAnimationFrame(animate);
         const currentTime = performance.now() / 1000;
         const deltaTime = currentTime - lastTime;
         lastTime = currentTime;
         updatePhysics(deltaTime);
-        controls.update();
+        if (controls.enabled) {
+            controls.update();
+        }
         renderer.render(scene, camera);
     };
     animate();

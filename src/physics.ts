@@ -91,6 +91,11 @@ export const updatePhysics = (deltaTime: number) => {
     }
 };
 
+export const getRigidBodyFromName = (name: string) => {
+    const match = rigidBodies.find((entry) => entry.threeObject.name === name);
+    return match ?? null;
+};
+
 export const createBoxShape = (width: number, height: number, depth: number) => {
     const shape = new AmmoLib.btBoxShape(new AmmoLib.btVector3(width / 2, height / 2, depth / 2));
     shape.setMargin(0.04);
