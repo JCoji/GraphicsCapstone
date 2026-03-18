@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { addStaticBody, addDynamicBody, createBoxShape, createMeshShape } from './physics';
 
 const loader = new OBJLoader();
 
@@ -49,7 +50,35 @@ const addGround = (scene: THREE.Scene) => {
     ground.position.set(10, 0, 11);
     ground.receiveShadow = true;
     scene.add(ground);
+
+    const groundCollider = new THREE.Object3D();
+    groundCollider.position.copy(ground.position);
+
+    scene.add(groundCollider);
+
+    const shape = createBoxShape(200, 1, 200);
+    const body = addStaticBody(groundCollider, shape);
+    body.setFriction(0.9);
 };
+
+const showPhysicsMesh = (mesh: THREE.Mesh, scene: THREE.Scene) => {
+
+    const debugGeo = mesh.geometry.clone();
+
+    const debugMat = new THREE.MeshBasicMaterial({
+        color: 0xff0000,
+        wireframe: true
+    });
+
+    const debugMesh = new THREE.Mesh(debugGeo, debugMat);
+
+    debugMesh.position.copy(mesh.position);
+    debugMesh.quaternion.copy(mesh.quaternion);
+    debugMesh.scale.copy(mesh.scale);
+
+    scene.add(debugMesh);
+};
+
 
 export const loadObjects = (scene: THREE.Scene) => {
     addGround(scene);
@@ -60,6 +89,21 @@ export const loadObjects = (scene: THREE.Scene) => {
         (obj) => {
             applyStandardMaterial(obj, 0xaaddff);
             scene.add(obj);
+
+            obj.updateMatrixWorld(true);
+
+            obj.traverse((child) => {
+                if ((child as THREE.Mesh).isMesh) {
+                    const mesh = child as THREE.Mesh;
+
+                    const shape = createMeshShape(mesh);
+                    const body = addStaticBody(mesh, shape);
+
+                    body.setFriction(0.8);
+                }
+            });
+
+            console.log('structure physics added');
         },
         undefined,
         (err) => console.error('Failed to load structure base:', err)
@@ -113,12 +157,15 @@ export const loadObjects = (scene: THREE.Scene) => {
             const iceNormal    = textureLoader.load('/ice_textures/Snow_normal.png');
             const iceDisp      = textureLoader.load('/ice_textures/Snow_height.png');
             const iceRoughness = textureLoader.load('/ice_textures/Snow_roughness.png');
+
             for (const tex of [iceAlbedo, iceNormal, iceDisp, iceRoughness]) {
                 tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
                 tex.repeat.set(1, 1);
             }
+
             obj.traverse((child) => {
                 if ((child as THREE.Mesh).isMesh) {
+
                     (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({
                         color: 0xd1f1ff,
                         map: iceAlbedo,
@@ -133,12 +180,34 @@ export const loadObjects = (scene: THREE.Scene) => {
                         polygonOffsetFactor: -2,
                         polygonOffsetUnits: -2,
                     });
+
                     (child as THREE.Mesh).castShadow = true;
                     (child as THREE.Mesh).receiveShadow = true;
                 }
             });
-            obj.position.y += 0.38;
+
+            // obj.position.y += 0.38;
             scene.add(obj);
+
+            obj.updateMatrixWorld(true);
+
+            obj.traverse((child) => {
+                if ((child as THREE.Mesh).isMesh) {
+
+                    const mesh = child as THREE.Mesh;
+
+                    // debug
+                    showPhysicsMesh(mesh, scene);
+
+                    const slopeShape = createMeshShape(mesh);
+
+                    const body = addStaticBody(mesh, slopeShape);
+                    body.setFriction(0.02);
+
+                    console.log("slope physics added");
+                }
+            });
+
             console.log('ice loaded', obj);
         },
         undefined,
@@ -152,11 +221,12 @@ export const loadObjects = (scene: THREE.Scene) => {
             applyStandardMaterial(obj,  0xffffff, texture);
 
             const positions = [
-                {x: 2, y:8, z:-2},
-                {x: 6, y:8, z:-2},
-                {x: 10, y:8, z:-2},
-                {x: 14, y:8, z:-2},
-                {x: 18, y:8, z:-2},
+                {x: 2, y:8, z:-2.5},
+                {x: 6, y:8, z:2},
+                {x: 10, y:8, z:10},
+                {x: 14, y:8, z:2},
+                {x: 18, y:8, z:0},
+                // {x: 16, y:8, z:0},
             ];
 
             positions.forEach((pos, i)=> {
@@ -164,8 +234,13 @@ export const loadObjects = (scene: THREE.Scene) => {
                 sled.name = `sled_${i}`;
                 sled.position.set(pos.x, pos.y, pos.z);
                 sled.scale.z = -1;
-                scene.add(sled)
-                console.log(`${sled.name} loaded`)
+                scene.add(sled);
+
+                const sledShape = createBoxShape(2, 0.5, 4);
+                const body = addDynamicBody(sled, sledShape, 10);
+                body.setFriction(0.05);
+                
+                console.log(`${sled.name} loaded`);
             });
 
         },
