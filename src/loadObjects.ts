@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { addStaticBody, addDynamicBody, createBoxShape, createMeshShape } from './physics';
 
 const loader = new OBJLoader();
+const gltfLoader = new GLTFLoader();
 
 const textureLoader = new THREE.TextureLoader();
 
@@ -214,6 +216,8 @@ export const loadObjects = (scene: THREE.Scene) => {
         (err) => console.error('Failed to load ice:', err)
     );
 
+    const sleds: THREE.Group[] = [];
+
     loader.load(
         '/sled_toboggan_improved.obj',
         (obj) => {
@@ -240,11 +244,80 @@ export const loadObjects = (scene: THREE.Scene) => {
                 const body = addDynamicBody(sled, sledShape, 10);
                 body.setFriction(0.05);
                 
+                sleds.push(sled);
                 console.log(`${sled.name} loaded`);
             });
 
+            loadAstronauts(sleds);
         },
         undefined,
         (err) => console.error('Failed to load sled(s):', err)
     );
+};
+
+const loadAstronauts = (sleds: THREE.Group[]) => {
+    const astronautModels = [
+        '/astronauts/Astronaut.glb',
+        '/astronauts/Astronaut-2.glb',
+        '/astronauts/Astronaut-3.glb',
+    ];
+
+    sleds.forEach((sled, idx) => {
+        const astronautIdx = idx % astronautModels.length;
+
+        gltfLoader.load(
+            astronautModels[astronautIdx],
+            (gltf) => {
+                const astronaut = gltf.scene;
+                astronaut.name = `astronaut_${idx}`;
+                
+                // Position astronaut seated on sled (relative position)
+                astronaut.position.set(0, 0, 0);
+                astronaut.scale.set(0.5, 0.5, 0.5);
+                
+                // Manipulate bones for seated pose
+                poseAstronautSeated(astronaut);
+                
+                // Add astronaut as child of sled so it moves with it
+                sled.add(astronaut);
+                
+                console.log(`${astronaut.name} loaded and attached to ${sled.name}`);
+            },
+            undefined,
+            (err) => console.error(`Failed to load astronaut ${astronautModels[astronautIdx]}:`, err)
+        );
+    });
+};
+
+const poseAstronautSeated = (model: THREE.Group) => {
+    const bones: { [key: string]: THREE.Bone } = {}
+
+    // Traverse the model to find bones
+    model.traverse((node) => {
+        if (node instanceof THREE.Bone) {
+            bones[node.name] = node;
+        }
+    });
+
+    // Pose to seated position
+
+    // Rotate hips back slightly
+    bones.Hips.rotation.x -= Math.PI / 12;
+
+    // Rotate upper legs up 90 degrees
+    bones.UpperLegL.rotation.x -= Math.PI / 2;
+    bones.UpperLegR.rotation.x -= Math.PI / 2;
+
+    // Move feet up and forward
+    bones.FootL.position.y += 0.008;
+    bones.FootL.position.z += 0.006;
+    bones.FootR.position.y += 0.008;
+    bones.FootR.position.z += 0.006;
+
+    // Rotate feet up 45 degrees
+    bones.FootL.rotation.x -= Math.PI / 4;
+    bones.FootR.rotation.x -= Math.PI / 4;
+
+    // Lower object slightly into sled
+    model.position.y -= 0.3;
 };
