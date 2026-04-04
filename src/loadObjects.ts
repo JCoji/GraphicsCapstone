@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { addStaticBody, addDynamicBody, createBoxShape, createMeshShape } from './physics';
 
 const loader = new OBJLoader();
+const gltfLoader = new GLTFLoader();
 
 const textureLoader = new THREE.TextureLoader();
 
@@ -214,6 +216,8 @@ export const loadObjects = (scene: THREE.Scene) => {
         (err) => console.error('Failed to load ice:', err)
     );
 
+    const sleds: THREE.Group[] = [];
+
     loader.load(
         '/sled_toboggan_improved.obj',
         (obj) => {
@@ -240,11 +244,46 @@ export const loadObjects = (scene: THREE.Scene) => {
                 const body = addDynamicBody(sled, sledShape, 10);
                 body.setFriction(0.05);
                 
+                sleds.push(sled);
                 console.log(`${sled.name} loaded`);
             });
 
+            loadAstronauts(scene, sleds);
         },
         undefined,
         (err) => console.error('Failed to load sled(s):', err)
     );
+};
+
+const loadAstronauts = (scene: THREE.Scene, sleds: THREE.Group[]) => {
+    const astronautModels = [
+        '/astronauts/Astronaut.glb',
+        '/astronauts/Astronaut-2.glb',
+        '/astronauts/Astronaut-3.glb'
+    ];
+
+    astronautModels.forEach((modelPath, idx) => {
+        gltfLoader.load(
+            modelPath,
+            (gltf) => {
+                const astronaut = gltf.scene;
+                astronaut.name = `astronaut_${idx}`;
+                
+                // Assign to a sled
+                const sledIndex = idx % sleds.length;
+                const sled = sleds[sledIndex];
+                
+                // Position astronaut on top of sled (relative position)
+                astronaut.position.set(0, 1.5, 0);
+                astronaut.scale.set(0.5, 0.5, 0.5);
+                
+                // Add astronaut as child of sled so it moves with it
+                sled.add(astronaut);
+                
+                console.log(`${astronaut.name} loaded and attached to ${sled.name}`);
+            },
+            undefined,
+            (err) => console.error(`Failed to load astronaut ${modelPath}:`, err)
+        );
+    });
 };
