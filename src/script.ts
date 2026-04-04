@@ -64,10 +64,12 @@ window.addEventListener('load', async () => {
     const { camera, renderer } = init();
     window.addEventListener('resize', () => handleResize(camera, renderer));
     const scene = createAndRenderScene(renderer, camera);
-    addSkybox(scene);
-    scene.backgroundIntensity = 0.6;
+    const skybox = addSkybox(scene, 0.8);
+    
+    //rotate skybox to align sun with directional light
+    skybox.rotation.y = -2.5; 
 
-    // Position camera to view full slope (X:0-21, Y:0-8, Z:-5.5 to 28)
+    //Position camera to view full slope (X:0-21, Y:0-8, Z:-5.5 to 28)
     camera.position.set(-4, 16, 8);
     camera.lookAt(10, 8, -2);
     camera.near = 0.1;
