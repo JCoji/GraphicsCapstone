@@ -248,30 +248,28 @@ export const loadObjects = (scene: THREE.Scene) => {
                 console.log(`${sled.name} loaded`);
             });
 
-            loadAstronauts(scene, sleds);
+            loadAstronauts(sleds);
         },
         undefined,
         (err) => console.error('Failed to load sled(s):', err)
     );
 };
 
-const loadAstronauts = (scene: THREE.Scene, sleds: THREE.Group[]) => {
+const loadAstronauts = (sleds: THREE.Group[]) => {
     const astronautModels = [
         '/astronauts/Astronaut.glb',
         '/astronauts/Astronaut-2.glb',
-        '/astronauts/Astronaut-3.glb'
+        '/astronauts/Astronaut-3.glb',
     ];
 
-    astronautModels.forEach((modelPath, idx) => {
+    sleds.forEach((sled, idx) => {
+        const astronautIdx = idx % astronautModels.length;
+
         gltfLoader.load(
-            modelPath,
+            astronautModels[astronautIdx],
             (gltf) => {
                 const astronaut = gltf.scene;
                 astronaut.name = `astronaut_${idx}`;
-                
-                // Assign to a sled
-                const sledIndex = idx % sleds.length;
-                const sled = sleds[sledIndex];
                 
                 // Position astronaut seated on sled (relative position)
                 astronaut.position.set(0, 0, 0);
@@ -286,7 +284,7 @@ const loadAstronauts = (scene: THREE.Scene, sleds: THREE.Group[]) => {
                 console.log(`${astronaut.name} loaded and attached to ${sled.name}`);
             },
             undefined,
-            (err) => console.error(`Failed to load astronaut ${modelPath}:`, err)
+            (err) => console.error(`Failed to load astronaut ${astronautModels[astronautIdx]}:`, err)
         );
     });
 };
