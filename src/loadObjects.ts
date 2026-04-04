@@ -273,9 +273,12 @@ const loadAstronauts = (scene: THREE.Scene, sleds: THREE.Group[]) => {
                 const sledIndex = idx % sleds.length;
                 const sled = sleds[sledIndex];
                 
-                // Position astronaut on top of sled (relative position)
-                astronaut.position.set(0, 1.5, 0);
+                // Position astronaut seated on sled (relative position)
+                astronaut.position.set(0, 0, 0);
                 astronaut.scale.set(0.5, 0.5, 0.5);
+                
+                // Manipulate bones for seated pose
+                poseAstronautSeated(astronaut);
                 
                 // Add astronaut as child of sled so it moves with it
                 sled.add(astronaut);
@@ -286,4 +289,37 @@ const loadAstronauts = (scene: THREE.Scene, sleds: THREE.Group[]) => {
             (err) => console.error(`Failed to load astronaut ${modelPath}:`, err)
         );
     });
+};
+
+const poseAstronautSeated = (model: THREE.Group) => {
+    const bones: { [key: string]: THREE.Bone } = {}
+
+    // Traverse the model to find bones
+    model.traverse((node) => {
+        if (node instanceof THREE.Bone) {
+            bones[node.name] = node;
+        }
+    });
+
+    // Pose to seated position
+
+    // Rotate hips back slightly
+    bones.Hips.rotation.x -= Math.PI / 12;
+
+    // Rotate upper legs up 90 degrees
+    bones.UpperLegL.rotation.x -= Math.PI / 2;
+    bones.UpperLegR.rotation.x -= Math.PI / 2;
+
+    // Move feet up and forward
+    bones.FootL.position.y += 0.008;
+    bones.FootL.position.z += 0.006;
+    bones.FootR.position.y += 0.008;
+    bones.FootR.position.z += 0.006;
+
+    // Rotate feet up 45 degrees
+    bones.FootL.rotation.x -= Math.PI / 4;
+    bones.FootR.rotation.x -= Math.PI / 4;
+
+    // Lower object slightly into sled
+    model.position.y -= 0.3;
 };
