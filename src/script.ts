@@ -65,6 +65,7 @@ window.addEventListener('load', async () => {
     window.addEventListener('resize', () => handleResize(camera, renderer));
     const scene = createAndRenderScene(renderer, camera);
     addSkybox(scene);
+    scene.backgroundIntensity = 0.6;
 
     // Position camera to view full slope (X:0-21, Y:0-8, Z:-5.5 to 28)
     camera.position.set(-4, 16, 8);
