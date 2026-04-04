@@ -10,7 +10,7 @@ export const init = (): { camera: THREE.PerspectiveCamera; renderer: THREE.WebGL
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize( window.innerWidth, window.innerHeight );
     document.body.appendChild( renderer.domElement );
-    renderer.setClearColor(new THREE.Color(0x333333));    
+    renderer.setClearColor(new THREE.Color(0x000000));
     const camera = new THREE.PerspectiveCamera();
 
     window.addEventListener('resize', () => handleResize(camera, renderer));

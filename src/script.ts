@@ -5,6 +5,7 @@ import { init, handleResize, createAndRenderScene } from './utils';
 import { loadObjects } from './loadObjects';
 import { initPhysics, updatePhysics, getRigidBodyFromName } from './physics';
 import { FirstPersonController } from './firstPersonController';
+import { addSkybox } from './skybox';
 
 const initFirstPersonView = (scene: THREE.Scene, camera: THREE.Camera, gui: GUI, modeState: any, controls: OrbitControls, renderer: THREE.WebGLRenderer) => {
     const sled = getRigidBodyFromName('sled_2');
@@ -63,7 +64,7 @@ window.addEventListener('load', async () => {
     const { camera, renderer } = init();
     window.addEventListener('resize', () => handleResize(camera, renderer));
     const scene = createAndRenderScene(renderer, camera);
-    scene.background = new THREE.Color(0x333333);
+    addSkybox(scene);
 
     // Position camera to view full slope (X:0-21, Y:0-8, Z:-5.5 to 28)
     camera.position.set(-4, 16, 8);
