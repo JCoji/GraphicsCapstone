@@ -325,6 +325,8 @@ const poseAstronautSeated = (model: THREE.Group) => {
 };
 
 // Snow particles
+export let snowParticles: THREE.Points | null = null;
+
 const loadSnowParticles = (scene: THREE.Scene) => {
     const flakeCount = 1000;
 
@@ -338,9 +340,9 @@ const loadSnowParticles = (scene: THREE.Scene) => {
     }
 
     snowGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const snow = new THREE.Points(
-        snowGeometry, 
+    snowParticles = new THREE.Points(
+        snowGeometry,
         new THREE.PointsMaterial({ color: 0xffffff, size: 0.3, transparent: true, opacity: 0.8 }),
     );
-    scene.add(snow);
+    scene.add(snowParticles);
 }
