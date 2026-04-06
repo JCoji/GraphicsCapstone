@@ -128,7 +128,9 @@ window.addEventListener('load', async () => {
             const positions = snowParticles.geometry.attributes.position.array as Float32Array;
             for (let i = 1; i < positions.length; i += 3) {
                 positions[i] -= 0.05 * deltaTime * 60;
-                if (positions[i] < 0) positions[i] = 110;
+                if (positions[i] < 0){
+                    positions[i] = Math.random() * 100 + 10;
+                }
             }
             snowParticles.geometry.attributes.position.needsUpdate = true;
         }
