@@ -58,7 +58,7 @@ const addGround = (scene: THREE.Scene) => {
 
     scene.add(groundCollider);
 
-    const shape = createBoxShape(200, 1, 200);
+    const shape = createBoxShape(200, 0, 200);
     const body = addStaticBody(groundCollider, shape);
     body.setFriction(0.9);
 };
@@ -204,7 +204,7 @@ export const loadObjects = (scene: THREE.Scene) => {
                     const slopeShape = createMeshShape(mesh);
 
                     const body = addStaticBody(mesh, slopeShape);
-                    body.setFriction(0.02);
+                    body.setFriction(0.05);
 
                     console.log("slope physics added");
                 }
