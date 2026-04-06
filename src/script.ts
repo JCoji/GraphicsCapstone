@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GUI } from 'dat.gui';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { init, handleResize, createAndRenderScene } from './utils';
-import { loadObjects } from './loadObjects';
+import { loadObjects, snowParticles } from './loadObjects';
 import { initPhysics, updatePhysics, getRigidBodyFromName } from './physics';
 import { FirstPersonController } from './firstPersonController';
 import { addSkybox } from './skybox';
@@ -122,6 +122,17 @@ window.addEventListener('load', async () => {
         }
         if (firstPersonController && modeState.firstPerson) {
             firstPersonController.update();
+        }
+
+        if (snowParticles) {
+            const positions = snowParticles.geometry.attributes.position.array as Float32Array;
+            for (let i = 1; i < positions.length; i += 3) {
+                positions[i] -= 0.05 * deltaTime * 60;
+                if (positions[i] < 0){
+                    positions[i] = Math.random() * 100 + 10;
+                }
+            }
+            snowParticles.geometry.attributes.position.needsUpdate = true;
         }
 
         if (controls.enabled) {
