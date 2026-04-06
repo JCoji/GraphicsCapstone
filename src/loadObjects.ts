@@ -253,6 +253,8 @@ export const loadObjects = (scene: THREE.Scene) => {
         undefined,
         (err) => console.error('Failed to load sled(s):', err)
     );
+
+    loadSnowParticles(scene);
 };
 
 const loadAstronauts = (sleds: THREE.Group[]) => {
@@ -321,3 +323,24 @@ const poseAstronautSeated = (model: THREE.Group) => {
     // Lower object slightly into sled
     model.position.y -= 0.3;
 };
+
+// Snow particles
+const loadSnowParticles = (scene: THREE.Scene) => {
+    const flakeCount = 1000;
+
+    const snowGeometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(flakeCount * 3);
+
+    for (let i = 0; i < flakeCount; i++) {
+        positions[i * 3]     = Math.random() * 200 - 100;
+        positions[i * 3 + 1] = Math.random() * 100 + 10;
+        positions[i * 3 + 2] = Math.random() * 200 - 100;
+    }
+
+    snowGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const snow = new THREE.Points(
+        snowGeometry, 
+        new THREE.PointsMaterial({ color: 0xffffff, size: 0.3, transparent: true, opacity: 0.8 }),
+    );
+    scene.add(snow);
+}
