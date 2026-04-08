@@ -28,7 +28,7 @@ const applyStandardMaterial = (obj: THREE.Group, color: number, map: THREE.Textu
 
 const addGround = (scene: THREE.Scene) => {
     // const geometry = new THREE.CircleGeometry(100, 64);
-    const geometry = new THREE.CircleGeometry(200, 128);
+    const geometry = new THREE.CircleGeometry(150, 64);
     const groundAlbedo    = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Color.png');
     const groundNormal    = textureLoader.load('/Snow-10/Snow010A_2K-PNG_NormalGL.png');
     const groundDisp      = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Displacement.png');
@@ -87,6 +87,7 @@ export const loadObjects = (scene: THREE.Scene) => {
     addGround(scene);
     loadTrees(scene);
     loadSnowmen(scene);
+    loadIceRink(scene);
 
     // Blue base layer — renders behind the snow overlay
     loader.load(
@@ -349,6 +350,8 @@ const loadSnowParticles = (scene: THREE.Scene) => {
     );
     scene.add(snowParticles);
 }
+
+
 const loadTrees = (scene: THREE.Scene) => {
     const treeModels = [
         '/trees/tree-snow-a.glb',
@@ -356,7 +359,7 @@ const loadTrees = (scene: THREE.Scene) => {
         '/trees/tree-snow-c.glb',
     ];
 
-    const TREE_COUNT = 111;
+    const TREE_COUNT = 70;
 
     // Ensure trees do not spawn on the slope
     const SLOPE_BUFFER = 35;
@@ -367,34 +370,26 @@ const loadTrees = (scene: THREE.Scene) => {
         return (Math.sqrt(dx * dx + dz * dz) < SLOPE_BUFFER);
     };
 
+    const onRink = (x: number, z: number) => {
+        const dx = x - 40;
+        const dz = z - 100;
+        return (Math.sqrt(dx * dx + dz * dz) < SLOPE_BUFFER);
+    };
+
 
     const treePositions: {x: number, z: number, scale: number}[] = [];
-
-    // while (treePositions.length < TREE_COUNT) {
-    //     const x = Math.random() * 160 - 80;
-    //     const z = Math.random() * 160 - 80;
-    //     // const dx = x - 10;
-    //     // const dz = z - 11;
-
-    //     if (onSLope(x, z)) continue;
-
-    //     treePositions.push({
-    //         x,
-    //         z,
-    //         scale: 3.5 * Math.random() + 3,
-    //     });
-    // };
 
     // Use polar coordinates
     while (treePositions.length < TREE_COUNT) {
         const angle = Math.random() * Math.PI * 2;
-        const radius = 45 + Math.random() * 155;
+        const radius = 40 + Math.random() * 105;
         const x = 10 + Math.cos(angle) * radius;
         const z = 11 + Math.sin(angle) * radius;
         // const dx = x - 10;
         // const dz = z - 11;
 
         if (onSLope(x, z)) continue;
+        if (onRink(x, z) ) continue;
 
         treePositions.push({
             x,
@@ -449,34 +444,27 @@ const loadSnowmen = (scene: THREE.Scene) => {
         return (Math.sqrt(dx * dx + dz * dz) < SLOPE_BUFFER);
     };
 
+    const onRink = (x: number, z: number) => {
+        const dx = x - 40;
+        const dz = z - 100;
+        return (Math.sqrt(dx * dx + dz * dz) < SLOPE_BUFFER);
+    };
+
 
     const treePositions: {x: number, z: number, scale: number}[] = [];
-
-    // while (treePositions.length < TREE_COUNT) {
-    //     const x = Math.random() * 160 - 80;
-    //     const z = Math.random() * 160 - 80;
-    //     // const dx = x - 10;
-    //     // const dz = z - 11;
-
-    //     if (onSLope(x, z)) continue;
-
-    //     treePositions.push({
-    //         x,
-    //         z,
-    //         scale: 3.5 * Math.random() + 3,
-    //     });
-    // };
 
     // Use polar coordinates
     while (treePositions.length < TREE_COUNT) {
         const angle = Math.random() * Math.PI * 2;
-        const radius = 45 + Math.random() * 155;
+        const radius = 40 + Math.random() * 105;
         const x = 10 + Math.cos(angle) * radius;
         const z = 11 + Math.sin(angle) * radius;
         // const dx = x - 10;
         // const dz = z - 11;
 
-        if (onSLope(x, z)) continue;
+        if (onSLope(x, z) ) continue;
+        if (onRink(x, z) ) continue;
+
 
         treePositions.push({
             x,
@@ -514,3 +502,147 @@ const loadSnowmen = (scene: THREE.Scene) => {
         );
     });
 };
+
+
+
+const loadIceRink = (scene: THREE.Scene) => {
+    const iceRinkPosition = {x: 40, y: 0, z: 40, scale: 1};
+
+    gltfLoader.load(
+        '/ice_rink/ice_rink.glb',
+        (gltf) => {
+            const iceRink = gltf.scene;            
+            iceRink.position.set(40, 1.5, 100);
+            iceRink.scale.setScalar(1);
+            iceRink.rotation.y = - 30*Math.PI / 180;
+
+            
+            iceRink.traverse((child)=> {
+                if ((child as THREE.Mesh).isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+            
+            scene.add(iceRink);
+
+            // Load hockey players
+            loadHockeyPlayers(
+                scene,
+                {x: iceRink.position.x, z: iceRink.position.z}
+            )
+            
+            console.log(`iceRink loaded`);
+        },
+        undefined,
+        (err) => console.error(`Failed to load iceRink:`, err)
+    );
+};
+
+const poseAstronautHockey = (model: THREE.Group) => {
+    const bones: {[key: string]: THREE.Bone} = {};
+
+    model.traverse((node) => {
+        if (node instanceof THREE.Bone) {
+            bones[node.name] = node;
+        }
+
+    });
+
+    // Torso
+    bones.Hips.rotation.x += Math.PI / 12;
+    bones.Abdomen.rotation.x += Math.PI / 16;
+
+    // Left leg
+    bones.UpperLegL.rotation.x -= Math.PI / 3;
+    bones.LowerLegL.rotation.x += Math.PI / 4;
+
+    // Right leg
+    bones.UpperLegR.rotation.x += Math.PI / 8;
+    bones.LowerLegR.rotation.x += Math.PI / 8;
+
+    // Larms
+    bones.UpperArmL.rotation.x += Math.PI / 4;
+    bones.UpperArmR.rotation.x -= Math.PI / 4;
+};
+
+
+export const hockeyPlayers: {
+    obj: THREE.Group;
+    direction: number;
+    minX: number,
+    maxX: number,
+}[] = [];
+
+const loadHockeyPlayers = (scene: THREE.Scene, rinkPosition: {x: number, z: number}) => {
+    const astronautModels = [
+        '/astronauts/Astronaut.glb',
+        '/astronauts/Astronaut-2.glb',
+        '/astronauts/Astronaut-3.glb',
+    ];
+
+    const playerPositions = [
+        {x: -12, z: -7, direction: 1, rotation: Math.PI},
+        {x: -12, z: -1, direction: 1, rotation: Math.PI},
+        {x: -12, z: 5, direction: 1, rotation: Math.PI},
+
+        {x: 12, z: -3, direction: -1, rotation: Math.PI},
+        {x: 12, z: 3, direction: -1, rotation: Math.PI},
+        {x: 12, z: 9, direction: -1, rotation: Math.PI},
+
+    ];
+
+    playerPositions.forEach((pos, idx) => {
+        const playerIdx = idx % astronautModels.length;
+
+        gltfLoader.load(
+            astronautModels[playerIdx],
+            (gltf) => {
+                const player = gltf.scene;
+                player.name = `player_${idx}`;
+                
+                // Position player relative to ice rink
+                player.position.set(
+                    rinkPosition.x + pos.x,
+                    2,
+                    rinkPosition.z + pos.z,
+                );
+                
+                if (pos.direction === 1) {
+                    player.rotation.y = Math.PI / 2;
+                } else if (pos.direction === -1) {
+                    player.rotation.y = Math.PI + Math.PI / 2;
+                }
+
+                player.scale.set(1, 1, 1);
+                
+                // Manipulate bones for hockey
+                poseAstronautHockey(player);
+                
+                player.traverse((child)=> {
+                    if ((child as THREE.Mesh).isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+
+                scene.add(player);
+
+                // export players
+                hockeyPlayers.push({
+                    obj: player,
+                    direction: pos.direction,
+                    minX: rinkPosition.x - 15,
+                    maxX: rinkPosition.x + 15,
+                });
+
+                
+                console.log(`${player.name} loaded`);
+            },
+            undefined,
+            (err) => console.error(`Failed to load player ${astronautModels[playerIdx]}:`, err)
+        );
+    });
+};
+
+

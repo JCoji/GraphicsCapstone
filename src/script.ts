@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GUI } from 'dat.gui';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { init, handleResize, createAndRenderScene } from './utils';
-import { loadObjects, snowParticles } from './loadObjects';
+import { loadObjects, snowParticles, hockeyPlayers } from './loadObjects';
 import { initPhysics, updatePhysics, getRigidBodyFromName } from './physics';
 import { FirstPersonController } from './firstPersonController';
 import { addSkybox } from './skybox';
@@ -133,6 +133,21 @@ window.addEventListener('load', async () => {
                 }
             }
             snowParticles.geometry.attributes.position.needsUpdate = true;
+        }
+
+        if (hockeyPlayers) {
+            for (const p in hockeyPlayers) {
+                const player = hockeyPlayers[p];
+                player.obj.position.x += player.direction * 0.1;
+
+                if (player.obj.position.x >= player.maxX) {
+                    player.direction = -1;
+                    player.obj.rotation.y = Math.PI + Math.PI / 2;
+                } else if ((player.obj.position.x <= player.minX)) {
+                    player.direction = 1;
+                    player.obj.rotation.y = Math.PI / 2;
+                }
+            }
         }
 
         if (controls.enabled) {
