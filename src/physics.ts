@@ -5,7 +5,16 @@ declare const Ammo: any;
 
 let AmmoLib: any = null;
 let physicsWorld: any = null;
-let rigidBodies: any[] = [];
+interface RigidBodyEntry {
+    threeObject: THREE.Object3D;
+    body: any;
+    // Store initial position and rotation for reset
+    initialPosition: THREE.Vector3;
+    initialQuaternion: THREE.Quaternion;
+    isDynamic: boolean;
+}
+
+let rigidBodies: RigidBodyEntry[] = [];
 let tmpTrans: any = null;
 
 export const initPhysics = async () => {
@@ -42,7 +51,13 @@ export const addStaticBody = (threeObject: THREE.Object3D, shape: any) => {
     body.setFriction(1.0);
 
     physicsWorld.addRigidBody(body);
-    rigidBodies.push({ threeObject, body });
+    rigidBodies.push({
+        threeObject,
+        body,
+        initialPosition: worldPos.clone(),
+        initialQuaternion: worldQuat.clone(),
+        isDynamic: false,
+    });
     return body;
 };
 
@@ -66,7 +81,13 @@ export const addDynamicBody = (threeObject: THREE.Object3D, shape: any, mass: nu
     body.setFriction(1.0);
 
     physicsWorld.addRigidBody(body);
-    rigidBodies.push({ threeObject, body });
+    rigidBodies.push({
+        threeObject,
+        body,
+        initialPosition: worldPos.clone(),
+        initialQuaternion: worldQuat.clone(),
+        isDynamic: mass > 0,
+    });
     return body;
 };
 
@@ -94,6 +115,42 @@ export const updatePhysics = (deltaTime: number) => {
 export const getRigidBodyFromName = (name: string) => {
     const match = rigidBodies.find((entry) => entry.threeObject.name === name);
     return match ?? null;
+};
+
+export const resetPhysicsState = () => {
+    if (!physicsWorld || !tmpTrans) {
+        return;
+    }
+
+    for (const rb of rigidBodies) {
+        tmpTrans.setIdentity();
+        tmpTrans.setOrigin(new AmmoLib.btVector3(rb.initialPosition.x, rb.initialPosition.y, rb.initialPosition.z));
+        tmpTrans.setRotation(new AmmoLib.btQuaternion(
+            rb.initialQuaternion.x,
+            rb.initialQuaternion.y,
+            rb.initialQuaternion.z,
+            rb.initialQuaternion.w
+        ));
+
+        rb.body.setWorldTransform(tmpTrans);
+
+        const motionState = rb.body.getMotionState();
+        if (motionState) {
+            motionState.setWorldTransform(tmpTrans);
+        }
+
+        rb.threeObject.position.copy(rb.initialPosition);
+        rb.threeObject.quaternion.copy(rb.initialQuaternion);
+
+        if (rb.isDynamic) {
+            rb.body.setLinearVelocity(new AmmoLib.btVector3(0, 0, 0));
+            rb.body.setAngularVelocity(new AmmoLib.btVector3(0, 0, 0));
+            rb.body.clearForces();
+            rb.body.activate();
+        }
+    }
+
+    physicsWorld.stepSimulation(0, 0);
 };
 
 export const createBoxShape = (width: number, height: number, depth: number) => {

@@ -85,7 +85,7 @@ export class FirstPersonController {
 
     enable(): void {
         this.updateSledPose();
-        this.forwardXZ.set(0, 0, -1).applyQuaternion(this.worldQuaternion);
+        this.forwardXZ.set(0, 0, 1).applyQuaternion(this.worldQuaternion);
         this.forwardXZ.y = 0;
 
         if (this.forwardXZ.lengthSq() > 1e-8) {
