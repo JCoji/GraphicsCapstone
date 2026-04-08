@@ -135,16 +135,16 @@ export const createMeshShape = (mesh: THREE.Mesh) => {
         for (let i = 0; i < indices.length; i += 3) {
             triangleMesh.addTriangle(
                 ammoVertices[indices[i]],
-                ammoVertices[indices[i + 2]],
-                ammoVertices[indices[i + 1]]
+                ammoVertices[indices[i + 1]],
+                ammoVertices[indices[i + 2]]
             );
         }
     } else {
         for (let i = 0; i < ammoVertices.length; i += 3) {
             triangleMesh.addTriangle(
                 ammoVertices[i],
-                ammoVertices[i + 2],
-                ammoVertices[i + 1]
+                ammoVertices[i + 1],
+                ammoVertices[i + 2]
             );
         }
     }
