@@ -215,7 +215,6 @@ export const loadObjects = (scene: THREE.Scene) => {
                 const sled = obj.clone();
                 sled.name = `sled_${i}`;
                 sled.position.set(pos.x, pos.y, pos.z);
-                sled.scale.z = -1;
                 scene.add(sled);
 
                 const sledShape = createBoxShape(2, 0.5, 4);
