@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { addStaticBody, addDynamicBody, createBoxShape, createMeshShape } from './physics';
+import { build } from 'vite';
 
 const loader = new OBJLoader();
 const gltfLoader = new GLTFLoader();
@@ -89,7 +90,7 @@ export const loadObjects = (scene: THREE.Scene) => {
     loadSnowmen(scene);
     loadIceRink(scene);
     loadFence(scene);
-
+    loadBuildings(scene);
     // Blue base layer — renders behind the snow overlay
     loader.load(
         '/sled_slope_structure_fixed_uv_v3.obj',
@@ -363,7 +364,7 @@ const loadTrees = (scene: THREE.Scene) => {
     const TREE_COUNT = 70;
 
     // Ensure trees do not spawn on the slope
-    const SLOPE_BUFFER = 35;
+    const SLOPE_BUFFER = 38;
 
     const onSLope = (x: number, z: number) => {
         const dx = x - 10;
@@ -376,6 +377,14 @@ const loadTrees = (scene: THREE.Scene) => {
         const dz = z - 100;
         return (Math.sqrt(dx * dx + dz * dz) < SLOPE_BUFFER);
     };
+
+    const onFence = (x: number, z: number) => {
+        const dx = x - 10;
+        const dz = z - 50;
+        return (Math.sqrt(dx * dx + dz * dz) < 15);
+    };
+
+    
 
 
     const treePositions: {x: number, z: number, scale: number}[] = [];
@@ -391,6 +400,9 @@ const loadTrees = (scene: THREE.Scene) => {
 
         if (onSLope(x, z)) continue;
         if (onRink(x, z) ) continue;
+        if (onFence(x, z)) continue;
+        if (x < -55 || x > 75) continue;
+
 
         treePositions.push({
             x,
@@ -451,6 +463,12 @@ const loadSnowmen = (scene: THREE.Scene) => {
         return (Math.sqrt(dx * dx + dz * dz) < SLOPE_BUFFER);
     };
 
+    const onFence = (x: number, z: number) => {
+        const dx = x - 10;
+        const dz = z - 50;
+        return (Math.sqrt(dx * dx + dz * dz) < 15);
+    };
+
 
     const treePositions: {x: number, z: number, scale: number}[] = [];
 
@@ -465,6 +483,9 @@ const loadSnowmen = (scene: THREE.Scene) => {
 
         if (onSLope(x, z) ) continue;
         if (onRink(x, z) ) continue;
+        if (onFence(x, z)) continue;
+        if (x < -55 || x > 75) continue;
+
 
 
         treePositions.push({
@@ -615,7 +636,7 @@ const loadHockeyPlayers = (scene: THREE.Scene, rinkPosition: {x: number, z: numb
                     player.rotation.y = Math.PI + Math.PI / 2;
                 }
 
-                player.scale.set(2, 2, 2);
+                player.scale.set(1.2, 1.2, 1.2);
                 
                 // Manipulate bones for hockey
                 poseAstronautHockey(player);
@@ -681,4 +702,84 @@ const loadFence = (scene: THREE.Scene) => {
         undefined,
         (err) => console.error(`Failed to load fence:`, err)
     );
+};
+
+
+const loadBuildings = (scene: THREE.Scene) => {
+    const buildingModels = [
+        '/build/building-a.glb',
+        '/build/building-j.glb',
+        '/build/building-b.glb',
+        '/build/building-k.glb',
+        '/build/building-c.glb',
+        '/build/building-l.glb',
+        '/build/building-d.glb',
+        '/build/building-m.glb',
+        '/build/building-e.glb',
+        '/build/building-f.glb',
+        '/build/building-g.glb',
+        '/build/building-h.glb',
+        '/build/building-i.glb',
+
+    ];
+
+    const SPACING = 25;
+
+    const buildingPositions: {x: number; z: number; rotation: number}[] = [];
+
+    // line 1
+    for (let z = -100; z <= 130; z += SPACING) {
+        buildingPositions.push({x: -60, z, rotation: -Math.PI / 2});
+    }
+
+    for (let z = -100; z <= 130; z += SPACING) {
+        buildingPositions.push({x: 80, z, rotation: Math.PI / 2});
+    }
+
+    // line 2
+    for (let z = -80; z <= 110; z += SPACING) {
+        buildingPositions.push({x: -85, z, rotation: -Math.PI / 2});
+    }
+
+    for (let z = -80; z <= 110; z += SPACING) {
+        buildingPositions.push({x: 105, z, rotation: Math.PI / 2});
+    }
+    
+    // Line 3
+    for (let z = -50; z <= 80; z += SPACING) {
+        buildingPositions.push({x: -110, z, rotation: -Math.PI / 2});
+    }
+
+    for (let z = -50; z <= 80; z += SPACING) {
+        buildingPositions.push({x: 130, z, rotation: Math.PI / 2});
+    }
+
+    buildingPositions.forEach((pos, idx) => {
+        const modelPath = buildingModels[idx % buildingModels.length];
+
+        gltfLoader.load(
+            modelPath, 
+            (gltf) => {
+            const building = gltf.scene;
+            building.name = `building_${idx}`;
+            building.position.set(pos.x, 0, pos.z);
+            building.scale.setScalar(15);
+            building.rotation.y = pos.rotation;
+
+             building.traverse((child) => {
+                    if ((child as THREE.Mesh).isMesh) {
+                        const shape = createBoxShape(5, 2, 0.2);
+                        addStaticBody(building, shape);
+                    }
+                });
+
+            scene.add(building);
+            console.log(`building loaded`);
+
+            },
+            
+        undefined,
+        (err) => console.error(`building to load fence:`, err)
+    );
+});
 };
