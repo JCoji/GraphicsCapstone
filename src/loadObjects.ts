@@ -88,6 +88,7 @@ export const loadObjects = (scene: THREE.Scene) => {
     loadTrees(scene);
     loadSnowmen(scene);
     loadIceRink(scene);
+    loadFence(scene);
 
     // Blue base layer — renders behind the snow overlay
     loader.load(
@@ -614,7 +615,7 @@ const loadHockeyPlayers = (scene: THREE.Scene, rinkPosition: {x: number, z: numb
                     player.rotation.y = Math.PI + Math.PI / 2;
                 }
 
-                player.scale.set(1, 1, 1);
+                player.scale.set(2, 2, 2);
                 
                 // Manipulate bones for hockey
                 poseAstronautHockey(player);
@@ -646,3 +647,38 @@ const loadHockeyPlayers = (scene: THREE.Scene, rinkPosition: {x: number, z: numb
 };
 
 
+const loadFence = (scene: THREE.Scene) => {
+    gltfLoader.load(
+        '/fence/fence.glb',
+        (gltf) => {
+            for (let i = 0; i < 5; i++) {
+                const fence = gltf.scene.clone();
+                fence.name = `fence${i}`;
+                fence.position.set(10 + (i - 2) * 5, 0, 50);
+                fence.scale.setScalar(0.035);
+
+                fence.traverse((child)=> {
+                    if ((child as THREE.Mesh).isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+
+                scene.add(fence);
+                fence.updateMatrixWorld(true);
+
+                fence.traverse((child) => {
+                    if ((child as THREE.Mesh).isMesh) {
+                        const shape = createBoxShape(5, 2, 0.2);
+                        addStaticBody(fence, shape);
+                    }
+                });
+
+            }
+            
+            console.log(`fence loaded`);
+        },
+        undefined,
+        (err) => console.error(`Failed to load fence:`, err)
+    );
+};
