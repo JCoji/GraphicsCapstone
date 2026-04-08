@@ -91,6 +91,8 @@ export const loadObjects = (scene: THREE.Scene) => {
     loadIceRink(scene);
     loadFence(scene);
     loadBuildings(scene);
+    loadSculptures(scene);
+
     // Blue base layer — renders behind the snow overlay
     loader.load(
         '/sled_slope_structure_fixed_uv_v3.obj',
@@ -361,10 +363,10 @@ const loadTrees = (scene: THREE.Scene) => {
         '/trees/tree-snow-c.glb',
     ];
 
-    const TREE_COUNT = 70;
+    const TREE_COUNT = 80;
 
     // Ensure trees do not spawn on the slope
-    const SLOPE_BUFFER = 38;
+    const SLOPE_BUFFER = 30;
 
     const onSLope = (x: number, z: number) => {
         const dx = x - 10;
@@ -375,7 +377,7 @@ const loadTrees = (scene: THREE.Scene) => {
     const onRink = (x: number, z: number) => {
         const dx = x - 40;
         const dz = z - 100;
-        return (Math.sqrt(dx * dx + dz * dz) < SLOPE_BUFFER);
+        return (Math.sqrt(dx * dx + dz * dz) < 25);
     };
 
     const onFence = (x: number, z: number) => {
@@ -399,9 +401,10 @@ const loadTrees = (scene: THREE.Scene) => {
         // const dz = z - 11;
 
         if (onSLope(x, z)) continue;
-        if (onRink(x, z) ) continue;
-        if (onFence(x, z)) continue;
+        if (onRink(x, z)) continue;
+        // if (onFence(x, z)) continue;
         if (x < -55 || x > 75) continue;
+        if (z > 30 && z < 100 && x > -40 && x < 55) continue;
 
 
         treePositions.push({
@@ -446,10 +449,10 @@ const loadSnowmen = (scene: THREE.Scene) => {
         '/snowmen/snowman-hat.glb',
     ];
 
-    const TREE_COUNT = 20;
+    const TREE_COUNT = 30;
 
     // Ensure trees do not spawn on the slope
-    const SLOPE_BUFFER = 35;
+    const SLOPE_BUFFER = 30;
 
     const onSLope = (x: number, z: number) => {
         const dx = x - 10;
@@ -460,7 +463,7 @@ const loadSnowmen = (scene: THREE.Scene) => {
     const onRink = (x: number, z: number) => {
         const dx = x - 40;
         const dz = z - 100;
-        return (Math.sqrt(dx * dx + dz * dz) < SLOPE_BUFFER);
+        return (Math.sqrt(dx * dx + dz * dz) < 25);
     };
 
     const onFence = (x: number, z: number) => {
@@ -481,10 +484,11 @@ const loadSnowmen = (scene: THREE.Scene) => {
         // const dx = x - 10;
         // const dz = z - 11;
 
-        if (onSLope(x, z) ) continue;
-        if (onRink(x, z) ) continue;
-        if (onFence(x, z)) continue;
+        if (onSLope(x, z)) continue;
+        if (onRink(x, z)) continue;
+        // if (onFence(x, z)) continue;
         if (x < -55 || x > 75) continue;
+        if (z > 30 && z < 100 && x > -40 && x < 55) continue;
 
 
 
@@ -770,6 +774,8 @@ const loadBuildings = (scene: THREE.Scene) => {
                     if ((child as THREE.Mesh).isMesh) {
                         const shape = createBoxShape(5, 2, 0.2);
                         addStaticBody(building, shape);
+                        child.castShadow = true;
+                        child.receiveShadow = true;
                     }
                 });
 
@@ -782,4 +788,135 @@ const loadBuildings = (scene: THREE.Scene) => {
         (err) => console.error(`building to load fence:`, err)
     );
 });
+};
+
+
+// Sculptures
+const applyIceTexture = (obj: THREE.Group) => {
+        const snowAlbedo = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Color.png');
+        const snowNormal = textureLoader.load('/Snow-10/Snow010A_2K-PNG_NormalGL.png');
+        const snowDisp = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Displacement.png');
+        const snowRoughness = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Roughness.png');
+
+    obj.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+            (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({
+                color: 0xccffff,
+                map: snowAlbedo,
+                // normalMap: snowNormal,
+                // bumpMap: snowDisp,
+                // bumpScale: 1,
+                // roughnessMap: snowRoughness,
+                roughness: 0.05,
+                opacity: 0.85,
+                transparent: true,
+                metalness: 0.3,
+            });
+            (child as THREE.Mesh).castShadow = true;
+            (child as THREE.Mesh).receiveShadow = true;
+        }
+    });
+};
+
+const loadEagleSculpture = (scene: THREE.Scene, position: THREE.Vector3) => {
+    gltfLoader.load('/sculptures/eagle_sculpture.glb', (gltf) => {
+        const eagle = gltf.scene;
+        eagle.position.copy(position);
+        eagle.scale.setScalar(0.25)
+        eagle.rotation.y = -Math.PI / 2;
+        applyIceTexture(eagle);
+        scene.add(eagle);
+    },
+    undefined,
+    (err) => console.error('failed to load eagle_sculpture:', err ));
+};
+
+const loadLionSculpture = (scene: THREE.Scene, position: THREE.Vector3) => {
+    gltfLoader.load('/sculptures/stone_sculpture_door_lion.glb', (gltf) => {
+        const lion = gltf.scene;
+        lion.position.copy(position);
+        lion.position.y += 6;
+        lion.rotation.y = 135 * Math.PI /180;
+        lion.scale.setScalar(0.25);
+        applyIceTexture(lion);
+        scene.add(lion);
+    },
+    undefined,
+    (err) => console.error('failed to load stone_sculpture_door_lion:', err ));
+};
+
+const loadCrabSculpture = (scene: THREE.Scene, position: THREE.Vector3) => {
+    gltfLoader.load('/sculptures/crystal_crab.glb', (gltf) => {
+        const lion = gltf.scene;
+        lion.position.copy(position);
+        lion.rotation.y = 180 * Math.PI /180;
+        lion.scale.setScalar(5);
+        applyIceTexture(lion);
+        scene.add(lion);
+    },
+    undefined,
+    (err) => console.error('failed to load crystal_crab:', err ));
+};
+
+const loadEagleTwoSculpture = (scene: THREE.Scene, position: THREE.Vector3) => {
+    gltfLoader.load('/sculptures/eagle_statue.glb', (gltf) => {
+        const lion = gltf.scene;
+        lion.position.copy(position);
+        lion.scale.setScalar(10);
+        lion.rotation.y = 90 * -Math.PI /180;
+        applyIceTexture(lion);
+        scene.add(lion);
+    },
+    undefined,
+    (err) => console.error('failed to load eagle_statue:', err ));
+};
+
+const loadCatSculpture = (scene: THREE.Scene, position: THREE.Vector3) => {
+    gltfLoader.load('/sculptures/cat_statue.glb', (gltf) => {
+        const lion = gltf.scene;
+        lion.position.copy(position);
+        lion.scale.setScalar(5);
+        lion.position.y += 1;
+        lion.rotation.y = 90 * -Math.PI /180;
+        applyIceTexture(lion);
+        scene.add(lion);
+    },
+    undefined,
+    (err) => console.error('failed to load cat_statue:', err ));
+};
+
+const loadDragonSculpture = (scene: THREE.Scene, position: THREE.Vector3) => {
+    gltfLoader.load('/sculptures/dragon_statue.glb', (gltf) => {
+        const lion = gltf.scene;
+        lion.position.copy(position);
+        lion.position.y += 4.5;
+        lion.scale.setScalar(5);
+        lion.rotation.y = 180 * Math.PI /180;
+        applyIceTexture(lion);
+        scene.add(lion);
+    },
+    undefined,
+    (err) => console.error('failed to load dragon_statue:', err ));
+};
+
+const loadSculptures = (scene: THREE.Scene) => {
+    // const CENTER = {x: 0, z: 40};
+    const statueLoaders = [
+        loadEagleSculpture,
+        loadLionSculpture,
+        loadCrabSculpture,
+        loadEagleTwoSculpture,
+        loadCatSculpture,
+        loadDragonSculpture,
+    ];
+
+    statueLoaders.forEach((sculptureLoad, idx) => {
+        const radius = 20;
+        const angle = (idx / 5) * Math.PI;
+        const x = -15 + Math.cos(angle) * radius;
+        const z = 70 + Math.sin(angle) * radius;
+        sculptureLoad(scene, new THREE.Vector3(x, 0, z))
+
+    })
+
 };
