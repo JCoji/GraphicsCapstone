@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GUI } from 'dat.gui';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { init, handleResize, createAndRenderScene } from './utils';
-import { loadObjects, snowParticles, hockeyPlayers } from './loadObjects';
+import { loadObjects, snowParticles, updateAstronautRagdolls, hockeyPlayers } from './loadObjects';
 import { initPhysics, updatePhysics, getRigidBodyFromName } from './physics';
 import { FirstPersonController } from './firstPersonController';
 import { addSkybox } from './skybox';
@@ -115,6 +115,7 @@ window.addEventListener('load', async () => {
         const deltaTime = currentTime - lastTime;
         lastTime = currentTime;
         updatePhysics(deltaTime);
+        updateAstronautRagdolls(deltaTime);
 
         // lazy-load first person controller after objects are loaded and physics bodies are created
         if (!firstPersonController) {
