@@ -3,6 +3,8 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { addStaticBody, addDynamicBody, createBoxShape, createMeshShape } from './physics';
 import { build } from 'vite';
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
+
 
 const loader = new OBJLoader();
 const gltfLoader = new GLTFLoader();
@@ -818,81 +820,103 @@ const applyIceTexture = (obj: THREE.Group) => {
     });
 };
 
-const loadEagleSculpture = (scene: THREE.Scene, position: THREE.Vector3) => {
+
+const hdrLoader = new HDRLoader()
+
+const applytest = (obj: THREE.Group, envMap:THREE.Texture) => {
+    const iceMaterial = new THREE.MeshPhysicalMaterial({
+        transmission: 0.8,
+        thickness: 1.5,
+        roughness: 0.67,
+        envMap: envMap,
+        envMapIntensity: 0.5,
+        clearcoat: 0.5,
+        clearcoatRoughness: 0.12,
+    });
+
+    obj.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+            (child as THREE.Mesh).material = iceMaterial;
+            (child as THREE.Mesh).castShadow = true;
+            (child as THREE.Mesh).receiveShadow = true;
+        }
+    });
+};
+const loadEagleSculpture = (scene: THREE.Scene, position: THREE.Vector3, envMap: THREE.Texture) => {
     gltfLoader.load('/sculptures/eagle_sculpture.glb', (gltf) => {
         const eagle = gltf.scene;
         eagle.position.copy(position);
         eagle.scale.setScalar(0.25)
         eagle.rotation.y = -Math.PI / 2;
-        applyIceTexture(eagle);
+        applytest(eagle, envMap);
         scene.add(eagle);
     },
     undefined,
     (err) => console.error('failed to load eagle_sculpture:', err ));
 };
 
-const loadLionSculpture = (scene: THREE.Scene, position: THREE.Vector3) => {
+const loadLionSculpture = (scene: THREE.Scene, position: THREE.Vector3, envMap: THREE.Texture) => {
     gltfLoader.load('/sculptures/stone_sculpture_door_lion.glb', (gltf) => {
         const lion = gltf.scene;
         lion.position.copy(position);
         lion.position.y += 6;
         lion.rotation.y = 135 * Math.PI /180;
         lion.scale.setScalar(0.25);
-        applyIceTexture(lion);
+        applytest(lion, envMap);
         scene.add(lion);
     },
     undefined,
     (err) => console.error('failed to load stone_sculpture_door_lion:', err ));
 };
 
-const loadCrabSculpture = (scene: THREE.Scene, position: THREE.Vector3) => {
+const loadCrabSculpture = (scene: THREE.Scene, position: THREE.Vector3, envMap: THREE.Texture) => {
     gltfLoader.load('/sculptures/crystal_crab.glb', (gltf) => {
         const lion = gltf.scene;
         lion.position.copy(position);
         lion.rotation.y = 180 * Math.PI /180;
         lion.scale.setScalar(5);
-        applyIceTexture(lion);
+        applytest(lion, envMap);
         scene.add(lion);
     },
     undefined,
     (err) => console.error('failed to load crystal_crab:', err ));
 };
 
-const loadEagleTwoSculpture = (scene: THREE.Scene, position: THREE.Vector3) => {
+const loadEagleTwoSculpture = (scene: THREE.Scene, position: THREE.Vector3, envMap: THREE.Texture) => {
     gltfLoader.load('/sculptures/eagle_statue.glb', (gltf) => {
         const lion = gltf.scene;
         lion.position.copy(position);
         lion.scale.setScalar(10);
         lion.rotation.y = 90 * -Math.PI /180;
-        applyIceTexture(lion);
+        applytest(lion, envMap);
         scene.add(lion);
     },
     undefined,
     (err) => console.error('failed to load eagle_statue:', err ));
 };
 
-const loadCatSculpture = (scene: THREE.Scene, position: THREE.Vector3) => {
+const loadCatSculpture = (scene: THREE.Scene, position: THREE.Vector3, envMap: THREE.Texture) => {
     gltfLoader.load('/sculptures/cat_statue.glb', (gltf) => {
         const lion = gltf.scene;
         lion.position.copy(position);
         lion.scale.setScalar(5);
         lion.position.y += 1;
         lion.rotation.y = 90 * -Math.PI /180;
-        applyIceTexture(lion);
+        applytest(lion, envMap);
         scene.add(lion);
     },
     undefined,
     (err) => console.error('failed to load cat_statue:', err ));
 };
 
-const loadDragonSculpture = (scene: THREE.Scene, position: THREE.Vector3) => {
+const loadDragonSculpture = (scene: THREE.Scene, position: THREE.Vector3, envMap: THREE.Texture) => {
     gltfLoader.load('/sculptures/dragon_statue.glb', (gltf) => {
         const lion = gltf.scene;
         lion.position.copy(position);
         lion.position.y += 4.5;
         lion.scale.setScalar(5);
         lion.rotation.y = 180 * Math.PI /180;
-        applyIceTexture(lion);
+        applytest(lion, envMap);
         scene.add(lion);
     },
     undefined,
@@ -910,13 +934,29 @@ const loadSculptures = (scene: THREE.Scene) => {
         loadDragonSculpture,
     ];
 
-    statueLoaders.forEach((sculptureLoad, idx) => {
-        const radius = 20;
-        const angle = (idx / 5) * Math.PI;
-        const x = -15 + Math.cos(angle) * radius;
-        const z = 70 + Math.sin(angle) * radius;
-        sculptureLoad(scene, new THREE.Vector3(x, 0, z))
+    hdrLoader.load(
+        '/sculpture_texture/empty_warehouse_01_2k.hdr', (envMap) => {
+            envMap.mapping = THREE.EquirectangularReflectionMapping;
+            
+            statueLoaders.forEach((sculptureLoad, idx) => {
+                const radius = 20;
+                const angle = (idx / 5) * Math.PI;
+                const x = -15 + Math.cos(angle) * radius;
+                const z = 70 + Math.sin(angle) * radius;
+                sculptureLoad(scene, new THREE.Vector3(x, 0, z), envMap)
 
-    })
+            })
+
+        }
+    )
+
+    // statueLoaders.forEach((sculptureLoad, idx) => {
+    //     const radius = 20;
+    //     const angle = (idx / 5) * Math.PI;
+    //     const x = -15 + Math.cos(angle) * radius;
+    //     const z = 70 + Math.sin(angle) * radius;
+    //     sculptureLoad(scene, new THREE.Vector3(x, 0, z))
+
+    // })
 
 };
