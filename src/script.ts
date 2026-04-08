@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GUI } from 'dat.gui';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { init, handleResize, createAndRenderScene } from './utils';
-import { loadObjects, snowParticles, updateAstronautRagdolls } from './loadObjects';
+import { loadObjects, snowParticles, updateAstronautRagdolls, hockeyPlayers } from './loadObjects';
 import { initPhysics, updatePhysics, getRigidBodyFromName, resetPhysicsState } from './physics';
 import { FirstPersonController } from './firstPersonController';
 import { addSkybox } from './skybox';
@@ -92,19 +92,19 @@ window.addEventListener('load', async () => {
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 2);
     scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 2.5)
-    dirLight.position.set(30, 20, 40);
+    const dirLight = new THREE.DirectionalLight(0xffd580, 2.5)
+    dirLight.position.set(100, 70, -100);
     scene.add(dirLight);
 
     // Shadow lighting
-    const d = 50
+    const d = 300
 
     dirLight.castShadow = true;
     dirLight.shadow.camera.left = -d;
     dirLight.shadow.camera.right = d;
     dirLight.shadow.camera.top = d;
     dirLight.shadow.camera.bottom = -d;
-    dirLight.shadow.camera.far = 200;
+    dirLight.shadow.camera.far = 600;
     dirLight.shadow.mapSize.set(2048, 2048);
     dirLight.shadow.bias = -0.001
 
@@ -161,6 +161,21 @@ window.addEventListener('load', async () => {
                 }
             }
             snowParticles.geometry.attributes.position.needsUpdate = true;
+        }
+
+        if (hockeyPlayers) {
+            for (const p in hockeyPlayers) {
+                const player = hockeyPlayers[p];
+                player.obj.position.x += player.direction * 0.1;
+
+                if (player.obj.position.x >= player.maxX) {
+                    player.direction = -1;
+                    player.obj.rotation.y = Math.PI + Math.PI / 2;
+                } else if ((player.obj.position.x <= player.minX)) {
+                    player.direction = 1;
+                    player.obj.rotation.y = Math.PI / 2;
+                }
+            }
         }
 
         if (controls.enabled) {
