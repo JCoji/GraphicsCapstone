@@ -27,7 +27,8 @@ const applyStandardMaterial = (obj: THREE.Group, color: number, map: THREE.Textu
 };
 
 const addGround = (scene: THREE.Scene) => {
-    const geometry = new THREE.CircleGeometry(100, 64);
+    // const geometry = new THREE.CircleGeometry(100, 64);
+    const geometry = new THREE.CircleGeometry(200, 128);
     const groundAlbedo    = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Color.png');
     const groundNormal    = textureLoader.load('/Snow-10/Snow010A_2K-PNG_NormalGL.png');
     const groundDisp      = textureLoader.load('/Snow-10/Snow010A_2K-PNG_Displacement.png');
@@ -84,6 +85,8 @@ const showPhysicsMesh = (mesh: THREE.Mesh, scene: THREE.Scene) => {
 
 export const loadObjects = (scene: THREE.Scene) => {
     addGround(scene);
+    loadTrees(scene);
+    loadSnowmen(scene);
 
     // Blue base layer — renders behind the snow overlay
     loader.load(
@@ -346,3 +349,168 @@ const loadSnowParticles = (scene: THREE.Scene) => {
     );
     scene.add(snowParticles);
 }
+const loadTrees = (scene: THREE.Scene) => {
+    const treeModels = [
+        '/trees/tree-snow-a.glb',
+        '/trees/tree-snow-b.glb',
+        '/trees/tree-snow-c.glb',
+    ];
+
+    const TREE_COUNT = 111;
+
+    // Ensure trees do not spawn on the slope
+    const SLOPE_BUFFER = 35;
+
+    const onSLope = (x: number, z: number) => {
+        const dx = x - 10;
+        const dz = z - 11;
+        return (Math.sqrt(dx * dx + dz * dz) < SLOPE_BUFFER);
+    };
+
+
+    const treePositions: {x: number, z: number, scale: number}[] = [];
+
+    // while (treePositions.length < TREE_COUNT) {
+    //     const x = Math.random() * 160 - 80;
+    //     const z = Math.random() * 160 - 80;
+    //     // const dx = x - 10;
+    //     // const dz = z - 11;
+
+    //     if (onSLope(x, z)) continue;
+
+    //     treePositions.push({
+    //         x,
+    //         z,
+    //         scale: 3.5 * Math.random() + 3,
+    //     });
+    // };
+
+    // Use polar coordinates
+    while (treePositions.length < TREE_COUNT) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 45 + Math.random() * 155;
+        const x = 10 + Math.cos(angle) * radius;
+        const z = 11 + Math.sin(angle) * radius;
+        // const dx = x - 10;
+        // const dz = z - 11;
+
+        if (onSLope(x, z)) continue;
+
+        treePositions.push({
+            x,
+            z,
+            scale: 3.5 * Math.random() + 3,
+        });
+    };
+
+    treePositions.forEach((pos, idx) => {
+        const treeIdx = idx % treeModels.length;
+
+        gltfLoader.load(
+            treeModels[treeIdx],
+            (gltf) => {
+                const tree = gltf.scene;
+                tree.name = `tree_${idx}`;
+                
+                tree.position.set(pos.x, 0, pos.z);
+                tree.scale.setScalar(pos.scale);
+                
+                tree.traverse((child)=> {
+                    if ((child as THREE.Mesh).isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+                
+                scene.add(tree);
+                
+                console.log(`${scene.name} loaded`);
+            },
+            undefined,
+            (err) => console.error(`Failed to load tree ${treeModels[treeIdx]}:`, err)
+        );
+    });
+};
+
+const loadSnowmen = (scene: THREE.Scene) => {
+    const treeModels = [
+        '/snowmen/snowman.glb',
+        '/snowmen/snowman-hat.glb',
+    ];
+
+    const TREE_COUNT = 20;
+
+    // Ensure trees do not spawn on the slope
+    const SLOPE_BUFFER = 35;
+
+    const onSLope = (x: number, z: number) => {
+        const dx = x - 10;
+        const dz = z - 11;
+        return (Math.sqrt(dx * dx + dz * dz) < SLOPE_BUFFER);
+    };
+
+
+    const treePositions: {x: number, z: number, scale: number}[] = [];
+
+    // while (treePositions.length < TREE_COUNT) {
+    //     const x = Math.random() * 160 - 80;
+    //     const z = Math.random() * 160 - 80;
+    //     // const dx = x - 10;
+    //     // const dz = z - 11;
+
+    //     if (onSLope(x, z)) continue;
+
+    //     treePositions.push({
+    //         x,
+    //         z,
+    //         scale: 3.5 * Math.random() + 3,
+    //     });
+    // };
+
+    // Use polar coordinates
+    while (treePositions.length < TREE_COUNT) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 45 + Math.random() * 155;
+        const x = 10 + Math.cos(angle) * radius;
+        const z = 11 + Math.sin(angle) * radius;
+        // const dx = x - 10;
+        // const dz = z - 11;
+
+        if (onSLope(x, z)) continue;
+
+        treePositions.push({
+            x,
+            z,
+            scale: 1.5 * Math.random() + 1,
+            // alex_scale: 500,
+        });
+    };
+
+    treePositions.forEach((pos, idx) => {
+        const treeIdx = idx % treeModels.length;
+
+        gltfLoader.load(
+            treeModels[treeIdx],
+            (gltf) => {
+                const tree = gltf.scene;
+                tree.name = `tree_${idx}`;
+                
+                tree.position.set(pos.x, 0, pos.z);
+                tree.scale.setScalar(pos.scale);
+                
+                tree.traverse((child)=> {
+                    if ((child as THREE.Mesh).isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+                
+                scene.add(tree);
+                
+                console.log(`snowman_${idx} loaded`);
+            },
+            undefined,
+            (err) => console.error(`Failed to load snowman ${treeModels[treeIdx]}:`, err)
+        );
+    });
+};
