@@ -206,7 +206,7 @@ export const loadObjects = (scene: THREE.Scene) => {
             const positions = [
                 {x: 2, y:8, z:1},
                 {x: 6, y:8, z:2},
-                {x: 10, y:8, z:10},
+                {x: 10, y:8, z:1},
                 {x: 14, y:8, z:2},
                 {x: 18, y:8, z:0.5},
             ];
