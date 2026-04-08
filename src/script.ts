@@ -65,6 +65,7 @@ window.addEventListener('load', async () => {
     window.addEventListener('resize', () => handleResize(camera, renderer));
     const scene = createAndRenderScene(renderer, camera);
     const skybox = addSkybox(scene, 0.8);
+    const startOverlay = document.getElementById('start-overlay');
     
     //rotate skybox to align sun with directional light
     skybox.rotation.y = -2.5; 
@@ -107,6 +108,7 @@ window.addEventListener('load', async () => {
     const gui = new GUI({ name: 'Camera' });
     // lazy-load first person controller after objects are loaded and physics bodies are created
     let firstPersonController: FirstPersonController | null = null;
+    let started = false;
 
     let lastTime = 0;
     const animate = () => {
@@ -114,8 +116,6 @@ window.addEventListener('load', async () => {
         const currentTime = performance.now() / 1000;
         const deltaTime = currentTime - lastTime;
         lastTime = currentTime;
-        updatePhysics(deltaTime);
-        updateAstronautRagdolls(deltaTime);
 
         // lazy-load first person controller after objects are loaded and physics bodies are created
         if (!firstPersonController) {
@@ -124,6 +124,14 @@ window.addEventListener('load', async () => {
         if (firstPersonController && modeState.firstPerson) {
             firstPersonController.update();
         }
+
+        if (!started) {
+            renderer.render(scene, camera);
+            return;
+        }
+
+        updatePhysics(deltaTime);
+        updateAstronautRagdolls(deltaTime);
 
         if (snowParticles) {
             const positions = snowParticles.geometry.attributes.position.array as Float32Array;
@@ -142,6 +150,29 @@ window.addEventListener('load', async () => {
         renderer.render(scene, camera);
     };
     animate();
+
+    // scene starts frozen with overlay
+    // press space to hide overlay and start
+    const start = () => {
+        if (started) {
+            return;
+        }
+
+        started = true;
+        // hide overlay
+        startOverlay?.classList.add('hidden');
+    };
+
+    window.addEventListener('keydown', (event) => {
+        if (started) {
+            return;
+        }
+
+        if (event.code === 'Space') {
+            event.preventDefault();
+            start();
+        }
+    });
 
     loadObjects(scene);
 });
