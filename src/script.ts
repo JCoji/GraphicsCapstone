@@ -80,19 +80,19 @@ window.addEventListener('load', async () => {
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 2);
     scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 2.5)
-    dirLight.position.set(30, 20, 40);
+    const dirLight = new THREE.DirectionalLight(0xffd580, 2.5)
+    dirLight.position.set(100, 70, -100);
     scene.add(dirLight);
 
     // Shadow lighting
-    const d = 50
+    const d = 300
 
     dirLight.castShadow = true;
     dirLight.shadow.camera.left = -d;
     dirLight.shadow.camera.right = d;
     dirLight.shadow.camera.top = d;
     dirLight.shadow.camera.bottom = -d;
-    dirLight.shadow.camera.far = 200;
+    dirLight.shadow.camera.far = 600;
     dirLight.shadow.mapSize.set(2048, 2048);
     dirLight.shadow.bias = -0.001
 
