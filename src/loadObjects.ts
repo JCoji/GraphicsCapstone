@@ -58,27 +58,9 @@ const addGround = (scene: THREE.Scene) => {
 
     scene.add(groundCollider);
 
-    const shape = createBoxShape(200, 1, 200);
+    const shape = createBoxShape(200, 0, 200);
     const body = addStaticBody(groundCollider, shape);
     body.setFriction(0.9);
-};
-
-const showPhysicsMesh = (mesh: THREE.Mesh, scene: THREE.Scene) => {
-
-    const debugGeo = mesh.geometry.clone();
-
-    const debugMat = new THREE.MeshBasicMaterial({
-        color: 0xff0000,
-        wireframe: true
-    });
-
-    const debugMesh = new THREE.Mesh(debugGeo, debugMat);
-
-    debugMesh.position.copy(mesh.position);
-    debugMesh.quaternion.copy(mesh.quaternion);
-    debugMesh.scale.copy(mesh.scale);
-
-    scene.add(debugMesh);
 };
 
 
@@ -198,13 +180,10 @@ export const loadObjects = (scene: THREE.Scene) => {
 
                     const mesh = child as THREE.Mesh;
 
-                    // debug
-                    showPhysicsMesh(mesh, scene);
-
                     const slopeShape = createMeshShape(mesh);
 
                     const body = addStaticBody(mesh, slopeShape);
-                    body.setFriction(0.02);
+                    body.setFriction(0.05);
 
                     console.log("slope physics added");
                 }
@@ -225,12 +204,11 @@ export const loadObjects = (scene: THREE.Scene) => {
             applyStandardMaterial(obj,  0xffffff, texture);
 
             const positions = [
-                {x: 2, y:8, z:-2.5},
+                {x: 2, y:8, z:1},
                 {x: 6, y:8, z:2},
                 {x: 10, y:8, z:10},
                 {x: 14, y:8, z:2},
-                {x: 18, y:8, z:0},
-                // {x: 16, y:8, z:0},
+                {x: 18, y:8, z:0.5},
             ];
 
             positions.forEach((pos, i)=> {
@@ -282,6 +260,8 @@ const loadAstronauts = (sleds: THREE.Group[]) => {
                 
                 // Add astronaut as child of sled so it moves with it
                 sled.add(astronaut);
+                
+                registerRagdoll(astronaut, sled);
                 
                 console.log(`${astronaut.name} loaded and attached to ${sled.name}`);
             },
@@ -346,3 +326,100 @@ const loadSnowParticles = (scene: THREE.Scene) => {
     );
     scene.add(snowParticles);
 }
+
+// Ragdoll data structure, leg bones not included since they anchor the models to the sleds
+interface AstronautRagdoll {
+    sled: THREE.Group;
+    bones: {
+        spine?:     THREE.Bone;
+        neck?:      THREE.Bone;
+        head?:      THREE.Bone;
+        upperArmL?: THREE.Bone;
+        upperArmR?: THREE.Bone;
+        lowerArmL?: THREE.Bone;
+        lowerArmR?: THREE.Bone;
+    };
+    restRotations: Map<THREE.Bone, THREE.Euler>;
+    prevSledPos: THREE.Vector3;
+}
+
+const astronautRagdolls: AstronautRagdoll[] = [];
+
+// Map bone names to their corresponding body parts
+const BONE_ALIASES: Record<keyof AstronautRagdoll['bones'], string[]> = {
+    spine:     ['Abdomen', 'Torso', 'Hips'],
+    neck:      ['Neck'],
+    head:      ['Head'],
+    upperArmL: ['UpperArmL'],
+    upperArmR: ['UpperArmR'],
+    lowerArmL: ['LowerArmL'],
+    lowerArmR: ['LowerArmR'],
+};
+
+const registerRagdoll = (model: THREE.Group, sled: THREE.Group) => {
+
+    // Determine which bones correspond to which body parts 
+
+    // List of bones
+    const boneMap: Record<string, THREE.Bone> = {};
+    model.traverse((node) => { if (node instanceof THREE.Bone) boneMap[node.name] = node; });
+
+    const bones: AstronautRagdoll['bones'] = {} as AstronautRagdoll['bones'];
+
+    // For each bone, find the first matching bone name based on aliases
+    for (const [key, aliases] of Object.entries(BONE_ALIASES)) {
+        const resolvedBone = aliases.map(alias => boneMap[alias]).find(Boolean);
+        bones[key as keyof AstronautRagdoll['bones']] = resolvedBone;
+    }
+
+    // Ragdoll object
+    const ragdoll: AstronautRagdoll = {
+        sled,
+        bones,
+        restRotations: new Map(),
+        prevSledPos: sled.getWorldPosition(new THREE.Vector3()),
+    };
+
+    // Rest rotations for bones to return to when not affected by physics
+    for (const bone of Object.values(ragdoll.bones)) {
+        if (bone) ragdoll.restRotations.set(bone, bone.rotation.clone());
+    }
+
+    astronautRagdolls.push(ragdoll);
+};
+
+export const updateAstronautRagdolls = (deltaTime: number) => {
+    const dt = Math.max(deltaTime, 0.001); // Avoid division by zero
+    const _sledPos = new THREE.Vector3();
+    const _sledFwd = new THREE.Vector3();
+
+    for (const ragdoll of astronautRagdolls) {
+        
+        // Sled velocity from position difference
+        ragdoll.sled.getWorldPosition(_sledPos);
+        const sledVel = _sledPos.clone().sub(ragdoll.prevSledPos).divideScalar(dt);
+        ragdoll.prevSledPos.copy(_sledPos);
+
+        // Project velocity onto the sled's forward axis to get speed
+        ragdoll.sled.getWorldDirection(_sledFwd);
+        const projectedSpeed = sledVel.dot(_sledFwd);
+        const speed = Math.abs(projectedSpeed) > 0.01 ? projectedSpeed : sledVel.length(); // Fallback to overall speed if projection is too small
+
+        // Lean back when going fast, clamp so bones don't over rotate.
+        const targetLeanX = THREE.MathUtils.clamp(-speed * 0.2, -0.6, 0.6);
+
+        // Smoothly lerp each upper-body bone toward the target rotation.
+        for (const [key, bone] of Object.entries(ragdoll.bones) as Array<[keyof AstronautRagdoll['bones'], THREE.Bone | undefined]>) {
+            if (!bone) continue;
+            const rest = ragdoll.restRotations.get(bone)!;
+            let weight = 0;
+
+            if (key === 'spine') {
+                weight = 1;
+            } 
+
+            bone.rotation.x = THREE.MathUtils.lerp(bone.rotation.x, rest.x + targetLeanX * weight, 0.1);
+        }
+    }
+};
+
