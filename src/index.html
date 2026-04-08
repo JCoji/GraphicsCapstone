@@ -11,6 +11,29 @@
             margin: 0;
             overflow: hidden;
         }
+        #start-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
+            background: radial-gradient(circle at center, rgba(18, 28, 46, 0.2), rgba(0, 0, 0, 0.78));
+            color: white;
+            font-family: monospace;
+            text-align: center;
+            z-index: 20;
+            pointer-events: none;
+        }
+        #start-overlay.hidden {
+            display: none;
+        }
+        #start-overlay .title {
+            font-size: 18px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
         #debug-label {
             position: fixed;
             top: 12px;
@@ -26,7 +49,10 @@
             z-index: 10;
         }
     </style>
-    <div id="debug-label">Sled Slope — Debug View (Orbit: drag | Zoom: scroll | Pan: right-drag)</div>
+    <div id="start-overlay">
+        <div class="title">Press Space to Start</div>
+    </div>
+    <div id="debug-label">Sled Slope — Debug View (Orbit: drag | Zoom: scroll | Pan: right-drag | Reset: R)</div>
     <script src="https://kripken.github.io/ammo.js/builds/ammo.js"></script>
     <script type="module" src="./script.ts"></script>
 </body>

@@ -3,7 +3,7 @@ import { GUI } from 'dat.gui';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { init, handleResize, createAndRenderScene } from './utils';
 import { loadObjects, snowParticles, updateAstronautRagdolls } from './loadObjects';
-import { initPhysics, updatePhysics, getRigidBodyFromName } from './physics';
+import { initPhysics, updatePhysics, getRigidBodyFromName, resetPhysicsState } from './physics';
 import { FirstPersonController } from './firstPersonController';
 import { addSkybox } from './skybox';
 
@@ -56,7 +56,15 @@ const initFirstPersonView = (scene: THREE.Scene, camera: THREE.Camera, gui: GUI,
 
         firstPersonController.onMouseMove(event.movementX, event.movementY);
     });
-    return firstPersonController;
+    return {
+        controller: firstPersonController,
+        reset: () => {
+            modeState.firstPerson = false;
+            firstPersonToggleController.setValue(false);
+            firstPersonToggleController.updateDisplay();
+            firstPersonController.disable();
+        }
+    };
 }
 
 window.addEventListener('load', async () => {
@@ -65,13 +73,17 @@ window.addEventListener('load', async () => {
     window.addEventListener('resize', () => handleResize(camera, renderer));
     const scene = createAndRenderScene(renderer, camera);
     const skybox = addSkybox(scene, 0.8);
+    const startOverlay = document.getElementById('start-overlay');
     
     //rotate skybox to align sun with directional light
     skybox.rotation.y = -2.5; 
 
     //Position camera to view full slope (X:0-21, Y:0-8, Z:-5.5 to 28)
-    camera.position.set(-4, 16, 8);
-    camera.lookAt(10, 8, -2);
+    const initCameraPosition = new THREE.Vector3(-4, 16, 8);
+    const initLookAt = new THREE.Vector3(10, 8, -2);    
+    
+    camera.position.copy(initCameraPosition);
+    camera.lookAt(initLookAt);
     camera.near = 0.1;
     camera.far = 1000;
     camera.fov = 60;
@@ -99,14 +111,23 @@ window.addEventListener('load', async () => {
     renderer.shadowMap.enabled = true;
 
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.target.set(10, 8, -2);
+    controls.target.copy(initLookAt);
     controls.update();
+
+    const resetCameraView = () => {
+        camera.position.copy(initCameraPosition);
+        camera.lookAt(initLookAt);
+        controls.target.copy(initLookAt);
+        controls.update();
+    };
 
     // gui to control first person mode
     const modeState = { firstPerson: false };
     const gui = new GUI({ name: 'Camera' });
     // lazy-load first person controller after objects are loaded and physics bodies are created
-    let firstPersonController: FirstPersonController | null = null;
+    // method also returns a reset method to reset the camera
+    let firstPersonView: ReturnType<typeof initFirstPersonView> | null = null;
+    let started = false;
 
     let lastTime = 0;
     const animate = () => {
@@ -114,16 +135,22 @@ window.addEventListener('load', async () => {
         const currentTime = performance.now() / 1000;
         const deltaTime = currentTime - lastTime;
         lastTime = currentTime;
-        updatePhysics(deltaTime);
-        updateAstronautRagdolls(deltaTime);
 
         // lazy-load first person controller after objects are loaded and physics bodies are created
-        if (!firstPersonController) {
-            firstPersonController = initFirstPersonView(scene, camera, gui, modeState, controls, renderer);
+        if (!firstPersonView) {
+            firstPersonView = initFirstPersonView(scene, camera, gui, modeState, controls, renderer);
         }
-        if (firstPersonController && modeState.firstPerson) {
-            firstPersonController.update();
+        if (firstPersonView && modeState.firstPerson) {
+            firstPersonView.controller.update();
         }
+
+        if (!started) {
+            renderer.render(scene, camera);
+            return;
+        }
+
+        updatePhysics(deltaTime);
+        updateAstronautRagdolls(deltaTime);
 
         if (snowParticles) {
             const positions = snowParticles.geometry.attributes.position.array as Float32Array;
@@ -142,6 +169,52 @@ window.addEventListener('load', async () => {
         renderer.render(scene, camera);
     };
     animate();
+
+    // scene starts frozen with overlay
+    // press space to hide overlay and start
+    const start = () => {
+        if (started) {
+            return;
+        }
+
+        started = true;
+        // hide overlay
+        startOverlay?.classList.add('hidden');
+    };
+
+    const resetScene = () => {
+        started = false;
+        startOverlay?.classList.remove('hidden');
+
+        if (firstPersonView) {
+            firstPersonView.reset();
+        }
+
+        controls.enabled = true;
+        if (document.pointerLockElement) {
+            document.exitPointerLock();
+        }
+
+        resetPhysicsState();
+        resetCameraView();
+    };
+
+    window.addEventListener('keydown', (event) => {
+        if (event.code === 'KeyR') {
+            event.preventDefault();
+            resetScene();
+            return;
+        }
+
+        if (started) {
+            return;
+        }
+
+        if (event.code === 'Space') {
+            event.preventDefault();
+            start();
+        }
+    });
 
     loadObjects(scene);
 });
