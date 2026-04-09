@@ -123,6 +123,8 @@ export const resetPhysicsState = () => {
     }
 
     for (const rb of rigidBodies) {
+        physicsWorld.removeRigidBody(rb.body);
+
         tmpTrans.setIdentity();
         tmpTrans.setOrigin(new AmmoLib.btVector3(rb.initialPosition.x, rb.initialPosition.y, rb.initialPosition.z));
         tmpTrans.setRotation(new AmmoLib.btQuaternion(
@@ -132,15 +134,16 @@ export const resetPhysicsState = () => {
             rb.initialQuaternion.w
         ));
 
-        rb.body.setWorldTransform(tmpTrans);
-
         const motionState = rb.body.getMotionState();
         if (motionState) {
             motionState.setWorldTransform(tmpTrans);
         }
+        rb.body.setWorldTransform(tmpTrans);
 
         rb.threeObject.position.copy(rb.initialPosition);
         rb.threeObject.quaternion.copy(rb.initialQuaternion);
+
+        physicsWorld.addRigidBody(rb.body);
 
         if (rb.isDynamic) {
             rb.body.setLinearVelocity(new AmmoLib.btVector3(0, 0, 0));
@@ -150,7 +153,8 @@ export const resetPhysicsState = () => {
         }
     }
 
-    physicsWorld.stepSimulation(0, 0);
+    // Step the physics world to ensure all bodies are updated to their reset positions
+    physicsWorld.stepSimulation(0.016, 1);
 };
 
 export const createBoxShape = (width: number, height: number, depth: number) => {
